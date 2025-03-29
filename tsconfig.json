@@ -1,0 +1,13 @@
+{
+  "compilerOptions": {
+    "module": "ESNext",
+    "moduleResolution": "node10",
+    "target": "ES2022",
+    "outDir": "dist",
+    "paths": {
+      "@/*": ["./src/*"],
+      "@/public/*": ["./public/*"],
+    },
+  },
+  "include": ["src/**/*"],
+}
