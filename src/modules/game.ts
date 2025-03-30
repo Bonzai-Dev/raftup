@@ -1,96 +1,81 @@
 import {
   Engine,
-  Scene,
-  ArcRotateCamera,
+  PhysicsShapeType,
   HemisphericLight,
   Vector3,
-  Mesh,
+  Vector2,
+  PhysicsAggregate,
   MeshBuilder,
+  Scene,
   HavokPlugin,
+  ArcRotateCamera,
 } from "@babylonjs/core";
 import HavokPhysics from "@babylonjs/havok";
-
-import * as GUI from "@babylonjs/gui";
 import "@babylonjs/inspector";
-import Sphere from "@/modules/gameObject/sphere";
 import { physics } from "@/config";
+import GameObject from "@/modules/nodes/gameObject";
+import { toRad } from "@mathigon/euclid";
 
 export default class Game {
+  private static instance: Game; // Static property to hold the single instance
   private scene: Scene;
-  private engine: Engine;
-  private canvas: HTMLCanvasElement;
+  private readonly engine: Engine;
+  private readonly canvas: HTMLCanvasElement;
 
-  constructor() {
-    // create the canvas html element and attach it to the webpage
+  private constructor() {
+    // Make the constructor private to prevent direct instantiation
     this.canvas = document.createElement("canvas");
     document.body.appendChild(this.canvas);
 
-    // initialize babylon scene and engine
     this.engine = new Engine(this.canvas, true);
     this.scene = new Scene(this.engine);
 
     this.loadScene();
   }
 
+  // Static method to get the single instance of the class
+  public static getInstance(): Game {
+    if (!Game.instance) Game.instance = new Game();
+    return Game.instance;
+  }
+
   private async loadScene() {
     await this.loadPhysics();
 
-    const camera: ArcRotateCamera = new ArcRotateCamera(
-      "Camera",
-      Math.PI / 2,
-      Math.PI / 2,
-      2,
-      Vector3.Zero(),
-      this.scene
-    );
+    const camera = new ArcRotateCamera("Camera", Math.PI / 2, Math.PI / 2, 2, new Vector3(0, -2, 10), this.scene);
     camera.attachControl(this.canvas, true);
-    var light1: HemisphericLight = new HemisphericLight("light1", new Vector3(1, 1, 0), this.scene);
-    var sphere: Mesh = MeshBuilder.CreateSphere("sphere", { diameter: 1 }, this.scene);
 
-    new Sphere("sphere", this.scene, 1, new Vector3(0, 5, 0), {
-      mass: 1,
-      friction: 0.5,
-      restitution: 0.7,
+    new HemisphericLight("light1", new Vector3(1, 1, 0), this.scene);
+
+    new GameObject({
+      scene: this.scene,
+      mesh: MeshBuilder.CreatePlane("ground", { size: 10 }, this.scene),
+      collider: PhysicsShapeType.MESH,
+      position: new Vector3(0, -6, 0),
+      rotation: new Vector3(toRad(90), 0, 0),
     });
 
-
-    // Create a fullscreen UI
-    const advancedTexture = GUI.AdvancedDynamicTexture.CreateFullscreenUI("UI", true, this.scene);
-
-    // Create a button
-    const button = GUI.Button.CreateSimpleButton("button", "Click Me");
-    button.width = "150px";
-    button.height = "40px";
-    button.color = "white";
-    button.background = "blue";
-    button.horizontalAlignment = GUI.Control.HORIZONTAL_ALIGNMENT_CENTER;
-    button.verticalAlignment = GUI.Control.VERTICAL_ALIGNMENT_BOTTOM;
-    button.top = "-20px"; // Position the button slightly above the bottom edge
-    // Add an event listener for the button
-    button.onPointerClickObservable.add(() => {
-      console.log("Button clicked!");
-      alert("Button clicked!");
+    new GameObject({
+      scene: this.scene,
+      mesh: MeshBuilder.CreateSphere("ball", { diameter: 2 }, this.scene),
+      collider: PhysicsShapeType.SPHERE,
+      physicsMaterial: { mass: 1 },
+      position: new Vector3(0, 5, 0),
     });
-    // Add the button to the UI
-    advancedTexture.addControl(button);
 
     // hide/show the Inspector
     window.addEventListener("keydown", (event) => {
       // Shift+Ctrl+Alt+I
       if (event.shiftKey && event.ctrlKey && event.altKey && (event.key === "I" || event.key === "i")) {
-        if (this.scene.debugLayer.isVisible()) {
-          this.scene.debugLayer.hide();
-        } else {
-          this.scene.debugLayer.show();
-        }
+        if (this.scene.debugLayer.isVisible()) this.scene.debugLayer.hide();
+        else this.scene.debugLayer.show();
       }
     });
 
-    window.addEventListener("resize", function () {
-      // this.engine.resize();
+    window.addEventListener("resize", () => {
+      this.engine.resize();
     });
 
-    // run the main render loop
     this.engine.runRenderLoop(() => {
       this.scene.render();
     });

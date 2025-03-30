@@ -1,4 +1,4 @@
-import App from "@/modules/game";
+import Game from "@/modules/game";
 import "@/public/styles.css";
 
-let game = new App();
+let game = Game.getInstance();
