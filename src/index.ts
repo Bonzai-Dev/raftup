@@ -1,4 +1,4 @@
 import Game from "@/modules/game";
-import "@/public/styles.css";
+import "@/styles/globals.css";
 
-let game = Game.getInstance();
+Game.getInstance();

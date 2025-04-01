@@ -3,18 +3,17 @@ import {
   PhysicsShapeType,
   HemisphericLight,
   Vector3,
-  Vector2,
-  PhysicsAggregate,
   MeshBuilder,
   Scene,
   HavokPlugin,
-  ArcRotateCamera,
+  UniversalCamera,
 } from "@babylonjs/core";
 import HavokPhysics from "@babylonjs/havok";
 import "@babylonjs/inspector";
+import { toRad } from "@mathigon/euclid";
 import { physics } from "@/config";
 import GameObject from "@/modules/nodes/gameObject";
-import { toRad } from "@mathigon/euclid";
+import Player from "@/modules/nodes/player";
 
 export default class Game {
   private static instance: Game; // Static property to hold the single instance
@@ -42,13 +41,20 @@ export default class Game {
   private async loadScene() {
     await this.loadPhysics();
 
-    const camera = new ArcRotateCamera("Camera", Math.PI / 2, Math.PI / 2, 2, new Vector3(0, -2, 10), this.scene);
+    //#region inputs
+    const camera = new UniversalCamera("Camera", new Vector3(0, 0, -10), this.scene);
+    camera.angularSensibility = 500;
+    camera.minZ = 0.1;
+    camera.inertia = 0;
     camera.attachControl(this.canvas, true);
+    camera.inputs.addKeyboard();
+    camera.inputs.addMouse();
+    //#endregion
 
+    //#region Scene
     new HemisphericLight("light1", new Vector3(1, 1, 0), this.scene);
 
     new GameObject({
-      scene: this.scene,
       mesh: MeshBuilder.CreatePlane("ground", { size: 10 }, this.scene),
       collider: PhysicsShapeType.MESH,
       position: new Vector3(0, -6, 0),
@@ -56,27 +62,25 @@ export default class Game {
     });
 
     new GameObject({
-      scene: this.scene,
       mesh: MeshBuilder.CreateSphere("ball", { diameter: 2 }, this.scene),
       collider: PhysicsShapeType.SPHERE,
       physicsMaterial: { mass: 1 },
       position: new Vector3(0, 5, 0),
     });
 
-    // hide/show the Inspector
-    window.addEventListener("keydown", (event) => {
-      // Shift+Ctrl+Alt+I
-      if (event.shiftKey && event.ctrlKey && event.altKey && (event.key === "I" || event.key === "i")) {
-        if (this.scene.debugLayer.isVisible()) this.scene.debugLayer.hide();
-        else this.scene.debugLayer.show();
-      }
-    });
+    new Player();
+    //#endregion
 
     window.addEventListener("resize", () => {
       this.engine.resize();
     });
 
+    this.canvas.addEventListener("click", () => {
+      this.canvas.requestPointerLock(); 
+    });
+
     this.engine.runRenderLoop(() => {
+      this.canvas.focus();
       this.scene.render();
     });
   }
@@ -85,5 +89,17 @@ export default class Game {
     const havokInstance = await HavokPhysics();
     const havokPlugin = new HavokPlugin(true, havokInstance);
     this.scene.enablePhysics(physics.gravity, havokPlugin);
+  }
+
+  public getScene(): Scene {
+    return this.scene;
+  }
+
+  public getEngine(): Engine {
+    return this.engine;
+  }
+
+  public getCanvas(): HTMLCanvasElement {
+    return this.canvas;
   }
 }

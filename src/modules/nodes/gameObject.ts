@@ -1,7 +1,6 @@
 import {
   Scene,
   Vector3,
-  Vector2,
   Mesh,
   PhysicsAggregate,
   PhysicsShapeType,
@@ -9,7 +8,6 @@ import {
 } from "@babylonjs/core";
 
 export interface GameObjectParameters {
-  scene: Scene;
   mesh: Mesh;
   collider: PhysicsShapeType;
   position?: Vector3;
@@ -30,11 +28,6 @@ export default class GameObject {
       this.mesh,
       parameters.collider,
       parameters.physicsMaterial,
-      parameters.scene
     );
-
-    // -object
-    //   -mesh
-    //   -physicsCollider
   }
 }
