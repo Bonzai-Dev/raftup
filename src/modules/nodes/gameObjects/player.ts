@@ -1,5 +1,5 @@
+import { KeyboardEventTypes, PointerEventTypes, MeshBuilder, PhysicsShapeType, Vector3, StandardMaterial, Color3 } from "@babylonjs/core";
 import GameObject, { GameObjectParameters } from "./";
-import { KeyboardEventTypes, PointerEventTypes, MeshBuilder, PhysicsShapeType, Vector3 } from "@babylonjs/core";
 import Game from "@/modules/game";
 
 export default class Player extends GameObject {
@@ -18,27 +18,48 @@ export default class Player extends GameObject {
     glasses.parent = this.mesh;
     glasses.position.y = 0.6;
     glasses.position.z = -0.35;
+    /// TODO: ADD MATERIALS BRO 
+    // const playerMaterial = new StandardMaterial("glassesMat", scene);
+    // glassesMaterial.diffuseColor = new Color3(1, 0.584, 0);
+    // glasses.material = glassesMaterial;
 
     this.collider.body.setMassProperties({ inertia: Vector3.Zero() });
-    scene.onPointerObservable.add(function (pointerInfo) {
+    scene.onPointerObservable.add((pointerInfo) => {
       if (pointerInfo.type === PointerEventTypes.POINTERMOVE) {
-        const evt = pointerInfo.event;
-        const mouseX = evt.clientX;
-        const mouseY = evt.clientY;
-        console.log("Mouse moved to position: (" + mouseX + ", " + mouseY + ")");
+        // const evt = pointerInfo.event;
+        // const mouseX = evt.clientX;
+        // const mouseY = evt.clientY;
+        // pointer stuff
       }
     });
 
     // Brother make better input system pls
-    scene.onKeyboardObservable.add(function (keyboardInfo) {
+    scene.onKeyboardObservable.add((keyboardInfo) => {
       if (keyboardInfo.type === KeyboardEventTypes.KEYDOWN) {
+        console.log(this.moveVector);
+        switch (keyboardInfo.event.key.toLowerCase()) {
+          case "w":
+            this.moveVector.z -= -1;
+            break;
+          case "a":
+            this.moveVector.x -= -1;
+            break;
+          case "s":
+            this.moveVector.z += -1;
+            break;
+          case "d":
+            this.moveVector.x += -1;
+            break;
+        }
+        this.moveVector.normalize();
+    
+        /// Idk bro this sucks
         if (
           keyboardInfo.event.shiftKey &&
           keyboardInfo.event.ctrlKey &&
           keyboardInfo.event.altKey &&
           (keyboardInfo.event.key === "I" || keyboardInfo.event.key === "i")
         ) {
-          console.log("Toggling Inspector");
           if (scene.debugLayer.isVisible()) scene.debugLayer.hide();
           else scene.debugLayer.show();
         }
