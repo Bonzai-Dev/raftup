@@ -1,5 +1,4 @@
 import {
-  Scene,
   Vector3,
   Mesh,
   PhysicsAggregate,
