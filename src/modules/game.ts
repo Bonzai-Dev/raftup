@@ -1,16 +1,17 @@
 import {
   Engine,
-  Scene,
   HavokPlugin,
+  Scene
 } from "@babylonjs/core";
 import HavokPhysics from "@babylonjs/havok";
 import "@babylonjs/inspector";
 import { physics } from "@/config";
 import Scene1 from "@/modules/scenes/scene1";
+import GameScene from "./scenes";
 
 export default class Game {
   private static instance: Game;
-  private scene: Scene;
+  private scene: GameScene;
   private readonly engine: Engine;
   private readonly canvas: HTMLCanvasElement;
 
@@ -19,8 +20,7 @@ export default class Game {
     document.body.appendChild(this.canvas);
 
     this.engine = new Engine(this.canvas, true);
-    this.scene = new Scene(this.engine);
-
+    this.scene = new Scene(this.engine) as GameScene;
     this.loadGame();
   }
 
@@ -35,10 +35,10 @@ export default class Game {
 
     this.canvas.addEventListener("click", () => {
       this.canvas.requestPointerLock();
+      this.canvas.focus();
     });
 
     this.engine.runRenderLoop(() => {
-      this.canvas.focus();
       this.scene.render();
     });
   }
@@ -54,8 +54,8 @@ export default class Game {
     this.scene.enablePhysics(physics.gravity, havokPlugin);
   }
 
-  public getScene(): Scene {
-    return this.scene;
+  public getScene(): GameScene {
+    return this.scene as GameScene;
   }
 
   public getEngine(): Engine {

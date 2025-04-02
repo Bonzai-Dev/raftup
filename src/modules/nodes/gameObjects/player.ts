@@ -1,4 +1,4 @@
-import { KeyboardEventTypes, PointerEventTypes, MeshBuilder, PhysicsShapeType, Vector3, StandardMaterial, Color3 } from "@babylonjs/core";
+import { KeyboardEventTypes, PointerEventTypes, MeshBuilder, PhysicsShapeType, Vector3 } from "@babylonjs/core";
 import GameObject, { GameObjectParameters } from "./";
 import Game from "@/modules/game";
 
@@ -18,7 +18,8 @@ export default class Player extends GameObject {
     glasses.parent = this.mesh;
     glasses.position.y = 0.6;
     glasses.position.z = -0.35;
-    /// TODO: ADD MATERIALS BRO 
+
+    /// TODO: ADD MATERIALS BRO
     // const playerMaterial = new StandardMaterial("glassesMat", scene);
     // glassesMaterial.diffuseColor = new Color3(1, 0.584, 0);
     // glasses.material = glassesMaterial;
@@ -52,7 +53,7 @@ export default class Player extends GameObject {
             break;
         }
         this.moveVector.normalize();
-    
+
         /// Idk bro this sucks
         if (
           keyboardInfo.event.shiftKey &&
