@@ -1,4 +1,4 @@
-import { PhysicsShapeType, HemisphericLight, MeshBuilder, Vector3 } from "@babylonjs/core";
+import { PhysicsShapeType, HemisphericLight, MeshBuilder, Vector3, SpotLight, DirectionalLight, PointLight } from "@babylonjs/core";
 import "@babylonjs/inspector";
 import { toRad } from "@mathigon/euclid";
 import Scene, { SceneParameters } from "./scene";
@@ -13,7 +13,12 @@ export default class Test extends Scene {
   protected override scene() {
     this.camera.position = new Vector3(0, 0, -10);
 
-    new HemisphericLight("light1", new Vector3(1, 1, 0), this);
+    // const hemisphericLight = new HemisphericLight("HemisphericLight", new Vector3(1, 1, 0), this);
+    // hemisphericLight.intensity = 0.6;
+    const directionalLight = new DirectionalLight("DirectionalLight", new Vector3(0, -1, -1), this);
+    directionalLight.position = new Vector3(0, 10, 0);
+    directionalLight.intensity = 0.3;
+    directionalLight.autoCalcShadowZBounds = true;
 
     new GameObject({
       mesh: MeshBuilder.CreatePlane("ground", { size: 500 }, this),

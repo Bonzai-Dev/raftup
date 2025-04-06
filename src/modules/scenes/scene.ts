@@ -5,6 +5,15 @@ import {
   Engine,
   UniversalCamera,
   FreeCameraKeyboardMoveInput,
+  ShadowGenerator,
+  PointLight,
+  DirectionalLight,
+  SpotLight,
+  LightGizmo,
+  CascadedShadowGenerator,
+  IShadowGenerator,
+  IShadowLight,
+  PositionGizmo, RotationGizmo, ScaleGizmo, UtilityLayerRenderer
 } from "@babylonjs/core";
 import HavokPhysics from "@babylonjs/havok";
 import "@babylonjs/inspector";
@@ -62,7 +71,45 @@ export default class Scene extends BabylonScene {
 
   private async loadScene() {
     await this.loadPhysics();
-    this.scene();
+    this.scene();  
+
+    // if (this.debugMode) {
+    //   const utilityLayer = new UtilityLayerRenderer(this);
+    //   const positionGizmo = new PositionGizmo(utilityLayer);
+    //   const rotationGizmo = new RotationGizmo(utilityLayer);
+    //   const scaleGizmo = new ScaleGizmo(utilityLayer);
+
+    //   for (let i = 0; i < this.meshes.length; i++) {
+    //     const mesh = this.meshes[i];
+    //     positionGizmo.attachedMesh = mesh;
+    //     rotationGizmo.attachedMesh = mesh;
+    //     scaleGizmo.attachedMesh = mesh;
+    //   }
+    // }
+
+    for (let i = 0; i < this.lights.length; i++) {
+      const light = this.lights[i];
+
+      if (this.debugMode) {
+        const gizmo = new LightGizmo();
+        gizmo.light = light;
+        gizmo.scaleRatio = 5;
+      }
+
+      if (light instanceof DirectionalLight) {
+        const shadowGenerator = new CascadedShadowGenerator(2048, light); // Set shadow map size
+        shadowGenerator.numCascades = 4; // Number of cascades
+        shadowGenerator.lambda = 0.8; // Cascade distribution factor
+        shadowGenerator.autoCalcDepthBounds = true; // Automatically calculate depth bounds
+        shadowGenerator.usePercentageCloserFiltering = true; // Enable PCF for smoother shadows
+        shadowGenerator.bias = 0.0001; // Adjust this value to reduce shadow acne
+        shadowGenerator.normalBias = 0.01; // Helps with self-shadowing artifacts
+        
+        shadowGenerator.getShadowMap()!.renderList = this.meshes;
+      } else if (light instanceof PointLight) {
+
+      }
+    }
   }
 
   private async loadPhysics() {

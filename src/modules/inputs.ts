@@ -23,6 +23,7 @@ export default class Inputs {
     return Inputs.instance;
   }
 
+  // this also returns true if there are other keys pressed along with the provided keys
   public keysDown(keys: string[]): boolean {
     return keys.every((key) => this.pressedKeys.includes(key.toLowerCase()));
   }
