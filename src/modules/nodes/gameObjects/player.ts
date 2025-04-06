@@ -1,70 +1,71 @@
-import { KeyboardEventTypes, PointerEventTypes, MeshBuilder, PhysicsShapeType, Vector3 } from "@babylonjs/core";
-import GameObject, { GameObjectParameters } from "./";
+import {
+  MeshBuilder,
+  PhysicsShapeType,
+  Vector3,
+  StandardMaterial,
+  Color3,
+} from "@babylonjs/core";
+import GameObject, { GameObjectParameters } from "./object";
 import Game from "@/modules/game";
+import { inputsMap } from "@/config";
+import Inputs from "@/modules/inputs";
 
 export default class Player extends GameObject {
   private moveVector = Vector3.Zero();
 
   constructor() {
-    const scene = Game.getInstance().getScene();
+    const game = Game.getInstance();
+    const scene = game.getScene();
+    const inputs = Inputs.getInstance();
+
+    const playerMaterial = new StandardMaterial("Player", scene);
+    playerMaterial.diffuseColor = new Color3(1, 0.584, 0);
+
     const parameters: GameObjectParameters = {
       mesh: MeshBuilder.CreateCapsule("Player", { height: 2, radius: 0.5 }, scene),
       collider: PhysicsShapeType.CAPSULE,
-      physicsMaterial: { mass: 1 },
+      physicsMaterial: { mass: 1, restitution: -0.1 },
+      material: playerMaterial,
     };
 
     super(parameters);
-    const glasses = MeshBuilder.CreateBox("Glasses", { height: 0.25, width: 0.8, depth: 0.3 }, scene);
+
+    const glasses = MeshBuilder.CreateBox("Glasses", { height: 0.25, width: 0.8, depth: 0.6 }, scene);
     glasses.parent = this.mesh;
     glasses.position.y = 0.6;
-    glasses.position.z = -0.35;
-
-    /// TODO: ADD MATERIALS BRO
-    // const playerMaterial = new StandardMaterial("glassesMat", scene);
-    // glassesMaterial.diffuseColor = new Color3(1, 0.584, 0);
-    // glasses.material = glassesMaterial;
-
+    glasses.position.z = -0.25;
     this.collider.body.setMassProperties({ inertia: Vector3.Zero() });
-    scene.onPointerObservable.add((pointerInfo) => {
-      if (pointerInfo.type === PointerEventTypes.POINTERMOVE) {
-        // const evt = pointerInfo.event;
-        // const mouseX = evt.clientX;
-        // const mouseY = evt.clientY;
-        // pointer stuff
-      }
-    });
 
-    // Brother make better input system pls
-    scene.onKeyboardObservable.add((keyboardInfo) => {
-      if (keyboardInfo.type === KeyboardEventTypes.KEYDOWN) {
-        console.log(this.moveVector);
-        switch (keyboardInfo.event.key.toLowerCase()) {
-          case "w":
-            this.moveVector.z -= -1;
-            break;
-          case "a":
-            this.moveVector.x -= -1;
-            break;
-          case "s":
-            this.moveVector.z += -1;
-            break;
-          case "d":
-            this.moveVector.x += -1;
-            break;
-        }
-        this.moveVector.normalize();
+    scene.registerBeforeRender(() => {
+      if (scene.getFreeCameraEnabled()) return;
+      const cameraLookDirection = scene.getCamera().getDirection(Vector3.Forward());
+      const cameraRightDirection = scene.getCamera().getDirection(Vector3.Right());
 
-        /// Idk bro this sucks
-        if (
-          keyboardInfo.event.shiftKey &&
-          keyboardInfo.event.ctrlKey &&
-          keyboardInfo.event.altKey &&
-          (keyboardInfo.event.key === "I" || keyboardInfo.event.key === "i")
-        ) {
-          if (scene.debugLayer.isVisible()) scene.debugLayer.hide();
-          else scene.debugLayer.show();
-        }
-      }
+      let currentMoveDirection = new Vector3();
+      if (inputs.keysDown(inputsMap.moveForward)) currentMoveDirection.z += 1;
+      if (inputs.keysDown(inputsMap.moveBackward)) currentMoveDirection.z -= 1;
+      if (inputs.keysDown(inputsMap.moveLeft)) currentMoveDirection.x -= 1;
+      if (inputs.keysDown(inputsMap.moveRight)) currentMoveDirection.x += 1;
+
+      currentMoveDirection = cameraRightDirection
+        .scale(currentMoveDirection.x)
+        .add(cameraLookDirection.scale(currentMoveDirection.z));
+      currentMoveDirection.normalize();
+      this.moveVector = currentMoveDirection;
+
+      // accumulating force when pressed
+      this.collider.body.applyForce(
+        new Vector3(this.moveVector.x * 10000, 0, this.moveVector.z * 10000),
+        this.mesh.position
+      );
+
+      scene.getCamera().position = new Vector3(
+        this.mesh.position.x,
+        this.mesh.position.y + glasses.position.y,
+        this.mesh.position.z
+      );
+
+      this.mesh.rotation = new Vector3(0, Math.atan2(-cameraLookDirection.x, -cameraLookDirection.z), 0);
     });
   }
 }
