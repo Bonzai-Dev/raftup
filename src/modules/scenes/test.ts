@@ -15,10 +15,12 @@ export default class Test extends Scene {
 
     // const hemisphericLight = new HemisphericLight("HemisphericLight", new Vector3(1, 1, 0), this);
     // hemisphericLight.intensity = 0.6;
-    const directionalLight = new DirectionalLight("DirectionalLight", new Vector3(0, -1, -1), this);
-    directionalLight.position = new Vector3(0, 10, 0);
-    directionalLight.intensity = 0.3;
-    directionalLight.autoCalcShadowZBounds = true;
+    // const directionalLight = new DirectionalLight("DirectionalLight", new Vector3(0, -1, -1), this);
+    // directionalLight.position = new Vector3(0, 10, 0);
+    // directionalLight.intensity = 0.3;
+    // directionalLight.autoCalcShadowZBounds = true;
+
+    const spotLight = new SpotLight("SpotLight", new Vector3(0, 10, 0), new Vector3(0, -1, 0), Math.PI / 4, 0, this);
 
     new GameObject({
       mesh: MeshBuilder.CreatePlane("ground", { size: 500 }, this),
