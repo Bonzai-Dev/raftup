@@ -1,20 +1,20 @@
 import {
-  Scene,
   Vector3,
-  Vector2,
   Mesh,
   PhysicsAggregate,
   PhysicsShapeType,
   PhysicsAggregateParameters,
+  StandardMaterial
 } from "@babylonjs/core";
+import Game from "@/modules/game";
 
 export interface GameObjectParameters {
-  scene: Scene;
   mesh: Mesh;
   collider: PhysicsShapeType;
   position?: Vector3;
   rotation?: Vector3;
   physicsMaterial?: PhysicsAggregateParameters;
+  material?: StandardMaterial;
 }
 
 export default class GameObject {
@@ -26,15 +26,13 @@ export default class GameObject {
     this.mesh.position = parameters.position || Vector3.Zero();
     this.mesh.rotation = parameters.rotation || Vector3.Zero();
 
+    this.mesh.material = parameters.material || Game.getInstance().getScene().defaultMaterial;
+    this.mesh.receiveShadows = true;
+
     this.collider = new PhysicsAggregate(
       this.mesh,
       parameters.collider,
       parameters.physicsMaterial,
-      parameters.scene
     );
-
-    // -object
-    //   -mesh
-    //   -physicsCollider
   }
 }

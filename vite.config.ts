@@ -1,0 +1,13 @@
+import { defineConfig } from "vite";
+import tsconfigPaths from "vite-tsconfig-paths";
+
+// https://vite.dev/config/
+export default defineConfig({
+  plugins: [tsconfigPaths()],
+  optimizeDeps: {
+    exclude: ["@babylonjs/havok"],
+  },
+  server: {
+    port: 3000,
+  },
+});
