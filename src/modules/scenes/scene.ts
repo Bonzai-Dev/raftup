@@ -17,6 +17,7 @@ import {
   RotationGizmo,
   ScaleGizmo,
   UtilityLayerRenderer,
+  RenderTargetTexture,
 } from "@babylonjs/core";
 import HavokPhysics from "@babylonjs/havok";
 import "@babylonjs/inspector";
@@ -41,9 +42,10 @@ export default class Scene extends BabylonScene {
     this.debugMode = parameters.debugMode || false;
 
     this.camera = new UniversalCamera("Camera", Vector3.Zero(), this);
+    this.camera.minZ = 0.01;
+    this.camera.maxZ = 1000;
     this.camera.fov = 1.5;
     this.camera.angularSensibility = 500;
-    this.camera.minZ = 0.1;
     this.camera.inertia = 0;
     this.camera.attachControl(parameters.canvas, true);
     this.camera.inputs.addKeyboard();
@@ -100,33 +102,40 @@ export default class Scene extends BabylonScene {
       }
 
       if (light instanceof DirectionalLight) {
-        // const shadowGenerator = new CascadedShadowGenerator(1024, light); // Set shadow map size
-        // shadowGenerator.numCascades = 4; // Number of cascades
-        // shadowGenerator.lambda = 0.8; // Cascade distribution factor
-        // shadowGenerator.bias = 0.001;
-        // shadowGenerator.normalBias = 0.02;
-        // light.shadowMaxZ = 100;
-        // light.shadowMinZ = 10;
-        // shadowGenerator.useContactHardeningShadow = true;
-        // shadowGenerator.contactHardeningLightSizeUVRatio = 0.05;
+        const shadowGenerator = new CascadedShadowGenerator(1024 * 2, light); 
+        shadowGenerator.lambda = 0.5;
+        shadowGenerator.depthClamp = true;
+        shadowGenerator.stabilizeCascades = true;
+        shadowGenerator.autoCalcDepthBounds = true;
 
-        // shadowGenerator.getShadowMap()!.renderList = this.meshes;
+        shadowGenerator.bias = 0.0022;
+        shadowGenerator.normalBias = 0.01;
+
+        shadowGenerator.usePercentageCloserFiltering = true;
+        shadowGenerator.useContactHardeningShadow = true;
+        
+        shadowGenerator.transparencyShadow = true;
+        shadowGenerator.enableSoftTransparentShadow = true;
+        shadowGenerator.filteringQuality = ShadowGenerator.QUALITY_HIGH;
+
+        shadowGenerator.setDarkness(0.5);
+        shadowGenerator.getShadowMap()!.renderList = this.meshes;
       } else if (light instanceof PointLight) {
-
       } else if (light instanceof SpotLight) {
         const shadowGenerator = new ShadowGenerator(1024 * 2, light);
-        shadowGenerator.bias = 0.001;
-        shadowGenerator.normalBias = 0.01;
-        light.shadowMaxZ = 100;
-        light.shadowMinZ = 10;
-        shadowGenerator.usePercentageCloserFiltering = true;
-        shadowGenerator.useCloseExponentialShadowMap = true;
-        shadowGenerator.useContactHardeningShadow = true;
-        shadowGenerator.contactHardeningLightSizeUVRatio = 0.05;
-        shadowGenerator.transparencyShadow = true;
-        shadowGenerator.useKernelBlur = true;
-        shadowGenerator.blurKernel = 64;
 
+        shadowGenerator.bias = 0.0001;
+        shadowGenerator.normalBias = 0.01;
+        
+        shadowGenerator.contactHardeningLightSizeUVRatio = 0.1;
+        shadowGenerator.usePercentageCloserFiltering = true;
+        shadowGenerator.useContactHardeningShadow = true;
+
+        shadowGenerator.transparencyShadow = true;
+        shadowGenerator.enableSoftTransparentShadow = true;
+        shadowGenerator.filteringQuality = ShadowGenerator.QUALITY_HIGH;
+
+        shadowGenerator.setDarkness(0.5);
         shadowGenerator.getShadowMap()!.renderList = this.meshes;
       }
     }

@@ -1,15 +1,8 @@
-import {
-  MeshBuilder,
-  PhysicsShapeType,
-  Vector3,
-  StandardMaterial,
-  Color3,
-} from "@babylonjs/core";
+import { MeshBuilder, PhysicsShapeType, Vector3, StandardMaterial, Color3 } from "@babylonjs/core";
 import GameObject, { GameObjectParameters } from "./object";
 import Game from "@/modules/game";
 import { inputsMap } from "@/config";
 import Inputs from "@/modules/inputs";
-
 
 ///// PLAYER CANT MOOVE WHEN THE CAMERA FACES DOWN OR UP
 export default class Player extends GameObject {
@@ -48,6 +41,7 @@ export default class Player extends GameObject {
       if (inputs.keysDown(inputsMap.moveBackward)) currentMoveDirection.z -= 1;
       if (inputs.keysDown(inputsMap.moveLeft)) currentMoveDirection.x -= 1;
       if (inputs.keysDown(inputsMap.moveRight)) currentMoveDirection.x += 1;
+      if (inputs.keysDown(inputsMap.jump)) this.collider.body.applyImpulse(new Vector3(0, 1000, 0), this.mesh.position);
 
       currentMoveDirection = cameraRightDirection
         .scale(currentMoveDirection.x)
@@ -68,6 +62,9 @@ export default class Player extends GameObject {
       );
 
       this.mesh.rotation = new Vector3(0, Math.atan2(-cameraLookDirection.x, -cameraLookDirection.z), 0);
+    });
+
+    scene.onKeyboardObservable.add(() => {
     });
   }
 }

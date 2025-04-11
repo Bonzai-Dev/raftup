@@ -12,6 +12,7 @@ interface InputsMap {
   moveBackward: string[];
   moveLeft: string[];
   moveRight: string[];
+  jump: string[];
 }
 
 // Map inputs using the javascript key codes
@@ -23,4 +24,5 @@ export const inputsMap: InputsMap = {
   moveBackward: ["S"],
   moveLeft: ["A"],
   moveRight: ["D"],
+  jump: [" "],
 }
