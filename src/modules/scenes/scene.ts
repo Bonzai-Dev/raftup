@@ -117,6 +117,7 @@ export default class Scene extends BabylonScene {
         shadowGenerator.bias = 0.0022;
         shadowGenerator.normalBias = 0.01;
 
+        shadowGenerator.contactHardeningLightSizeUVRatio = 0.1;
         shadowGenerator.usePercentageCloserFiltering = true;
         shadowGenerator.useContactHardeningShadow = true;
         
