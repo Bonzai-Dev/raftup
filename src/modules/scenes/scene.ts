@@ -11,13 +11,6 @@ import {
   SpotLight,
   LightGizmo,
   CascadedShadowGenerator,
-  IShadowGenerator,
-  IShadowLight,
-  PositionGizmo,
-  RotationGizmo,
-  ScaleGizmo,
-  UtilityLayerRenderer,
-  RenderTargetTexture,
 } from "@babylonjs/core";
 import HavokPhysics from "@babylonjs/havok";
 import "@babylonjs/inspector";

@@ -1,4 +1,4 @@
-import { PhysicsShapeType, HemisphericLight, MeshBuilder, Vector3, SpotLight, DirectionalLight, PointLight, StandardMaterial, Color3 } from "@babylonjs/core";
+import { PhysicsShapeType, MeshBuilder, Vector3, SpotLight, DirectionalLight, StandardMaterial, Color3 } from "@babylonjs/core";
 import "@babylonjs/inspector";
 import { toRad } from "@mathigon/euclid";
 import Scene, { SceneParameters } from "./scene";
