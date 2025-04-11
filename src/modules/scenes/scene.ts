@@ -11,6 +11,8 @@ import {
   SpotLight,
   LightGizmo,
   CascadedShadowGenerator,
+  DepthRenderer,
+  Constants,
 } from "@babylonjs/core";
 import HavokPhysics from "@babylonjs/havok";
 import "@babylonjs/inspector";
@@ -44,6 +46,9 @@ export default class Scene extends BabylonScene {
     this.camera.inputs.addKeyboard();
     this.camera.inputs.addMouse();
     this.disableFreeCam();
+    
+    this.enableDepthRenderer();
+    this.disableDepthRenderer();
 
     this.onKeyboardObservable.add(() => {
       if (!this.debugMode) return;
@@ -95,11 +100,19 @@ export default class Scene extends BabylonScene {
       }
 
       if (light instanceof DirectionalLight) {
+        const depthRenderer = new DepthRenderer(this, Constants.TEXTURETYPE_FLOAT, this.camera, false, Constants.TEXTURE_NEAREST_SAMPLINGMODE);
+        const depthRendererId = "minmax" + this.camera.id;
+        this._depthRenderer[depthRendererId] = depthRenderer;
+
         const shadowGenerator = new CascadedShadowGenerator(1024 * 2, light); 
-        shadowGenerator.lambda = 0.5;
+        shadowGenerator.setDepthRenderer(depthRenderer);
+
+        shadowGenerator.lambda = 1;
         shadowGenerator.depthClamp = true;
         shadowGenerator.stabilizeCascades = true;
         shadowGenerator.autoCalcDepthBounds = true;
+        shadowGenerator._depthReducer._sourceTexture = null;
+        shadowGenerator._depthReducer.setSourceTexture(depthRenderer.getDepthMap(), true, Constants.TEXTURETYPE_FLOAT, true);
 
         shadowGenerator.bias = 0.0022;
         shadowGenerator.normalBias = 0.01;
