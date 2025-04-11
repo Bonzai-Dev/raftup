@@ -104,7 +104,7 @@ export default class Scene extends BabylonScene {
         const depthRendererId = "minmax" + this.camera.id;
         this._depthRenderer[depthRendererId] = depthRenderer;
 
-        const shadowGenerator = new CascadedShadowGenerator(1024 * 2, light); 
+        const shadowGenerator = new CascadedShadowGenerator(1024 * 2, light) as any; 
         shadowGenerator.setDepthRenderer(depthRenderer);
 
         shadowGenerator.lambda = 1;
