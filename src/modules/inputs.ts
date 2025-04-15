@@ -23,8 +23,12 @@ export default class Inputs {
     return Inputs.instance;
   }
 
-  // this also returns true if there are other keys pressed along with the provided keys
+  public keyDown(keys: string[]): boolean {
+    return keys.every((key) => this.pressedKeys.includes(key.toLowerCase()));
+  }
+
   public keysDown(keys: string[]): boolean {
+    if (keys.length !== this.pressedKeys.length) return false;
     return keys.every((key) => this.pressedKeys.includes(key.toLowerCase()));
   }
 }

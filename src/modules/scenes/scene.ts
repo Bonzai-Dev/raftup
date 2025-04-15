@@ -55,7 +55,7 @@ export default class Scene extends BabylonScene {
 
       if (inputs.keysDown(inputsMap.inspector)) {
         if (this.debugLayer.isVisible()) this.debugLayer.hide();
-        else this.debugLayer.show();
+        else this.debugLayer.show({embedMode: true});
       }
 
       if (inputs.keysDown(inputsMap.freeCamera)) {
