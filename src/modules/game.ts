@@ -22,11 +22,6 @@ export default class Game {
       this.engine.resize();
     });
 
-    this.canvas.addEventListener("click", () => {
-      this.canvas.requestPointerLock();
-      this.canvas.focus();
-    });
-
     this.engine.runRenderLoop(() => {
       this.scene.render();
     });

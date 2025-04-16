@@ -11,6 +11,17 @@ import {
   SpotLight,
   LightGizmo,
   CascadedShadowGenerator,
+<<<<<<< Updated upstream
+=======
+  DepthRenderer,
+  Constants,
+  UtilityLayerRenderer,
+  PositionGizmo,
+  RotationGizmo,
+  ScaleGizmo,
+  GizmoManager,
+  Gizmo,
+>>>>>>> Stashed changes
 } from "@babylonjs/core";
 import HavokPhysics from "@babylonjs/havok";
 import "@babylonjs/inspector";
@@ -64,34 +75,41 @@ export default class Scene extends BabylonScene {
       }
     });
 
+    parameters.canvas.addEventListener("click", () => {
+      if (!this.freeCameraEnabled) {
+        parameters.canvas.requestPointerLock();
+        parameters.canvas.focus();
+      }
+    });
+
     this.loadScene();
   }
 
   private async loadScene() {
     await this.loadPhysics();
-    this.scene();
+    await this.scene();
 
-    // if (this.debugMode) {
-    //   const utilityLayer = new UtilityLayerRenderer(this);
-    //   const positionGizmo = new PositionGizmo(utilityLayer);
-    //   const rotationGizmo = new RotationGizmo(utilityLayer);
-    //   const scaleGizmo = new ScaleGizmo(utilityLayer);
-
-    //   for (let i = 0; i < this.meshes.length; i++) {
-    //     const mesh = this.meshes[i];
-    //     positionGizmo.attachedMesh = mesh;
-    //     rotationGizmo.attachedMesh = mesh;
-    //     scaleGizmo.attachedMesh = mesh;
-    //   }
-    // }
+    if (this.debugMode) {
+      const gizmosManager = new GizmoManager(this);
+      gizmosManager.positionGizmoEnabled = true;
+      gizmosManager.rotationGizmoEnabled = true;
+    }
 
     for (let i = 0; i < this.lights.length; i++) {
       const light = this.lights[i];
-
       if (this.debugMode) {
         const gizmo = new LightGizmo();
         gizmo.light = light;
         gizmo.scaleRatio = 5;
+        
+        const utilityLayer = new UtilityLayerRenderer(this); // Utility layer for gizmos
+        // Create and attach a position gizmo
+        const positionGizmo = new PositionGizmo(utilityLayer);
+        positionGizmo.attachedNode = light; // Attach to the light
+      
+        // Create and attach a rotation gizmo
+        const rotationGizmo = new RotationGizmo(utilityLayer);
+        rotationGizmo.attachedNode = light; // Attach to the light
       }
 
       if (light instanceof DirectionalLight) {
@@ -153,7 +171,7 @@ export default class Scene extends BabylonScene {
     this.getCamera().inputs.removeByType("FreeCameraKeyboardMoveInput");
   }
 
-  protected scene() {}
+  protected async scene() {}
 
   public getCamera(): UniversalCamera {
     return this.camera;

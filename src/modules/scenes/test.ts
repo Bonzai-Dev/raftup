@@ -1,4 +1,15 @@
-import { PhysicsShapeType, MeshBuilder, Vector3, SpotLight, DirectionalLight, StandardMaterial, Color3 } from "@babylonjs/core";
+import {
+  PhysicsShapeType,
+  MeshBuilder,
+  Vector3,
+  SpotLight,
+  HemisphericLight,
+  DirectionalLight,
+  StandardMaterial,
+  Color3,
+  AppendSceneAsync,
+} from "@babylonjs/core";
+import { registerBuiltInLoaders } from "@babylonjs/loaders/dynamic";
 import "@babylonjs/inspector";
 import { toRad } from "@mathigon/euclid";
 import Scene, { SceneParameters } from "./scene";
@@ -10,11 +21,14 @@ export default class Test extends Scene {
     super({ engine: parameters.engine, canvas: parameters.canvas, debugMode: true });
   }
 
-  protected override scene() {
+  protected override async scene() {
+    registerBuiltInLoaders();
     this.camera.position = new Vector3(0, 0, -10);
 
-    // const hemisphericLight = new HemisphericLight("HemisphericLight", new Vector3(1, 1, 0), this);
-    // hemisphericLight.intensity = 0.6;
+    // await AppendSceneAsync("/src/assets/models/raft.glb", this);
+
+    const hemisphericLight = new HemisphericLight("HemisphericLight", new Vector3(1, 1, 0), this);
+    hemisphericLight.intensity = 0.6;
     const directionalLight = new DirectionalLight("DirectionalLight", new Vector3(-1, -2, -1), this);
     directionalLight.position = new Vector3(20, 10, 20);
     directionalLight.intensity = 0.3;
@@ -25,9 +39,14 @@ export default class Test extends Scene {
 
     const spotLight = new SpotLight("spotLight", new Vector3(0, 2, -4), new Vector3(0, -1, 1), toRad(43), 100, this);
     spotLight.intensity = 0.5;
-    // spotLight.shadowMaxZ = 100;
-    // spotLight.shadowMinZ = 0.1;
-    const spotLight2 = new SpotLight("spotLight2", new Vector3(-10, 2, -4), new Vector3(0, -1, -1), toRad(43), 100, this);
+    const spotLight2 = new SpotLight(
+      "spotLight2",
+      new Vector3(-10, 2, -4),
+      new Vector3(0, -1, -1),
+      toRad(43),
+      100,
+      this
+    );
     spotLight2.intensity = 0.5;
 
     new GameObject({
