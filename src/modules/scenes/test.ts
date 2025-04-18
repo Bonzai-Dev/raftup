@@ -7,7 +7,12 @@ import {
   DirectionalLight,
   StandardMaterial,
   Color3,
-  AppendSceneAsync,
+  ImportMeshAsync,
+  PhysicsAggregate,
+  PhysicsShapeBox,
+  Quaternion,
+  PhysicsBody,
+  PhysicsMotionType,
 } from "@babylonjs/core";
 import { registerBuiltInLoaders } from "@babylonjs/loaders/dynamic";
 import "@babylonjs/inspector";
@@ -25,7 +30,15 @@ export default class Test extends Scene {
     registerBuiltInLoaders();
     this.camera.position = new Vector3(0, 0, -10);
 
-    // await AppendSceneAsync("/src/assets/models/raft.glb", this);
+    const raft = await ImportMeshAsync("/src/assets/models/raft.glb", this);
+    const root = raft.meshes[0];
+    const { min, max } = root.getHierarchyBoundingVectors();
+    const size = max.subtract(min);
+    const center = min.add(max).scale(0.5);
+    const shape = new PhysicsShapeBox(new Vector3(center.x, center.y, center.z), Quaternion.Identity(), size, this);
+    const body = new PhysicsBody(root, PhysicsMotionType.DYNAMIC, false, this);
+    body.shape = shape;
+    body.setMassProperties({mass: 1});
 
     const hemisphericLight = new HemisphericLight("HemisphericLight", new Vector3(1, 1, 0), this);
     hemisphericLight.intensity = 0.6;
@@ -64,14 +77,15 @@ export default class Test extends Scene {
     });
 
     const transparentMaterial = new StandardMaterial("transparentMaterial", this);
-    transparentMaterial.diffuseColor = new Color3(1, 0, 0); // Red color
-    transparentMaterial.alpha = 0.5; // Set transparency (0 is fully transparent, 1 is opaque)
+    transparentMaterial.diffuseColor = new Color3(1, 0, 0);
+    transparentMaterial.alpha = 0.5;
+
     new GameObject({
       mesh: MeshBuilder.CreateSphere("ball", { diameter: 2 }, this),
       collider: PhysicsShapeType.SPHERE,
       physicsMaterial: { mass: 1 },
       position: new Vector3(0, 5, 0),
-      material: transparentMaterial, // Assign the transparent material
+      material: transparentMaterial,
     });
 
     new GameObject({

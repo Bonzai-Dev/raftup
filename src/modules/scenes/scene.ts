@@ -11,17 +11,10 @@ import {
   SpotLight,
   LightGizmo,
   CascadedShadowGenerator,
-<<<<<<< Updated upstream
-=======
-  DepthRenderer,
-  Constants,
   UtilityLayerRenderer,
   PositionGizmo,
   RotationGizmo,
-  ScaleGizmo,
   GizmoManager,
-  Gizmo,
->>>>>>> Stashed changes
 } from "@babylonjs/core";
 import HavokPhysics from "@babylonjs/havok";
 import "@babylonjs/inspector";
@@ -60,8 +53,15 @@ export default class Scene extends BabylonScene {
       if (!this.debugMode) return;
 
       if (inputs.keysDown(inputsMap.inspector)) {
-        if (this.debugLayer.isVisible()) this.debugLayer.hide();
-        else this.debugLayer.show();
+        if (this.debugLayer.isVisible()) {
+          this.debugLayer.hide();
+        }
+        else {
+          this.debugLayer.show({
+            embedMode: true, 
+            overlay: false,
+          });
+        }
       }
 
       if (inputs.keysDown(inputsMap.freeCamera)) {
@@ -101,19 +101,19 @@ export default class Scene extends BabylonScene {
         const gizmo = new LightGizmo();
         gizmo.light = light;
         gizmo.scaleRatio = 5;
-        
+
         const utilityLayer = new UtilityLayerRenderer(this); // Utility layer for gizmos
         // Create and attach a position gizmo
         const positionGizmo = new PositionGizmo(utilityLayer);
         positionGizmo.attachedNode = light; // Attach to the light
-      
+
         // Create and attach a rotation gizmo
         const rotationGizmo = new RotationGizmo(utilityLayer);
         rotationGizmo.attachedNode = light; // Attach to the light
       }
 
       if (light instanceof DirectionalLight) {
-        const shadowGenerator = new CascadedShadowGenerator(1024 * 2, light); 
+        const shadowGenerator = new CascadedShadowGenerator(1024 * 2, light);
         shadowGenerator.lambda = 0.5;
         shadowGenerator.depthClamp = true;
         shadowGenerator.stabilizeCascades = true;
@@ -124,7 +124,7 @@ export default class Scene extends BabylonScene {
 
         shadowGenerator.usePercentageCloserFiltering = true;
         shadowGenerator.useContactHardeningShadow = true;
-        
+
         shadowGenerator.transparencyShadow = true;
         shadowGenerator.enableSoftTransparentShadow = true;
         shadowGenerator.filteringQuality = ShadowGenerator.QUALITY_HIGH;
@@ -137,7 +137,7 @@ export default class Scene extends BabylonScene {
 
         shadowGenerator.bias = 0.0001;
         shadowGenerator.normalBias = 0.01;
-        
+
         shadowGenerator.contactHardeningLightSizeUVRatio = 0.1;
         shadowGenerator.usePercentageCloserFiltering = true;
         shadowGenerator.useContactHardeningShadow = true;

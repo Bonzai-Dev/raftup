@@ -4,7 +4,6 @@ import Game from "@/modules/game";
 import { inputsMap } from "@/config";
 import Inputs from "@/modules/inputs";
 
-///// PLAYER CANT MOOVE WHEN THE CAMERA FACES DOWN OR UP
 export default class Player extends GameObject {
   private moveVector = Vector3.Zero();
 
