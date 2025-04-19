@@ -15,6 +15,10 @@ import {
   PositionGizmo,
   RotationGizmo,
   GizmoManager,
+  CubeTexture,
+  MeshBuilder,
+  StandardMaterial,
+  Texture,
 } from "@babylonjs/core";
 import { registerBuiltInLoaders } from "@babylonjs/loaders/dynamic";
 import HavokPhysics from "@babylonjs/havok";
@@ -37,12 +41,16 @@ export default class Scene extends BabylonScene {
   constructor(parameters: SceneParameters) {
     super(parameters.engine);
     registerBuiltInLoaders();
-    this.createDefaultEnvironment({
-      groundSize: 1000, 
-      skyboxSize: 1000, 
-      rootPosition: new Vector3(0, -10, 0),
-    });
-
+    const skybox = MeshBuilder.CreateBox("skyBox", { size: 1000 }, this);
+    const skyboxMaterial = new StandardMaterial("skyBoxMaterial", this);
+    skyboxMaterial.backFaceCulling = false;
+    skyboxMaterial.reflectionTexture = new CubeTexture("/src/assets/textures/clouds.env", this);
+    skyboxMaterial.reflectionTexture.coordinatesMode = Texture.SKYBOX_MODE;
+    skyboxMaterial.disableLighting = true;
+    skybox.material = skyboxMaterial;
+  
+    this.environmentTexture = skyboxMaterial.reflectionTexture; // Optional for environment reflections
+  
     const inputs = Inputs.getInstance();
     this.debugMode = parameters.debugMode || false;
 
@@ -110,14 +118,12 @@ export default class Scene extends BabylonScene {
         gizmo.light = light;
         gizmo.scaleRatio = 5;
 
-        const utilityLayer = new UtilityLayerRenderer(this); // Utility layer for gizmos
-        // Create and attach a position gizmo
-        const positionGizmo = new PositionGizmo(utilityLayer);
-        positionGizmo.attachedNode = light; // Attach to the light
+        const utilityLayer = new UtilityLayerRenderer(this); 
 
-        // Create and attach a rotation gizmo
+        const positionGizmo = new PositionGizmo(utilityLayer);
+        positionGizmo.attachedNode = light; 
         const rotationGizmo = new RotationGizmo(utilityLayer);
-        rotationGizmo.attachedNode = light; // Attach to the light
+        rotationGizmo.attachedNode = light;
       }
 
       if (light instanceof DirectionalLight) {

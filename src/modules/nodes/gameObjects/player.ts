@@ -83,7 +83,10 @@ export default class Player extends GameObject {
     if (inputs.keysDown(inputsMap.moveLeft)) currentMoveDirection.x -= 1;
     if (inputs.keysDown(inputsMap.moveRight)) currentMoveDirection.x += 1;
     if (inputs.keysDown(inputsMap.jump) && this.onGround())
-      this.collider.body.applyImpulse(new Vector3(0, 10000, 0), this.mesh.position);
+      this.collider.body.applyForce(
+        new Vector3((this.moveVector.x * this.acceleration) / 2, 500000, (this.moveVector.x * this.acceleration) / 2),
+        this.mesh.position
+      );
 
     currentMoveDirection = cameraRightDirection
       .scale(currentMoveDirection.x)
@@ -128,6 +131,9 @@ export default class Player extends GameObject {
   private onGround(): boolean {
     const physicsEngine = Game.getInstance().getScene().getPhysicsEngine()!;
     const rayEnd = this.mesh.position.subtract(new Vector3(0, 1.1, 0));
-    return physicsEngine.raycast(this.mesh.position, rayEnd, { collideWith: 1 }).hasHit;
+    return (
+      physicsEngine.raycast(this.mesh.position, rayEnd, { collideWith: 1 }).hasHit &&
+      this.collider.body.getLinearVelocity().y <= 0.1
+    );
   }
 }
