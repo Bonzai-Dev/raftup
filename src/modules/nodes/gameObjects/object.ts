@@ -4,12 +4,13 @@ import {
   PhysicsAggregate,
   PhysicsShapeType,
   PhysicsAggregateParameters,
-  StandardMaterial
+  StandardMaterial,
+  AbstractMesh
 } from "@babylonjs/core";
 import Game from "@/modules/game";
 
 export interface GameObjectParameters {
-  mesh: Mesh;
+  mesh: Mesh | AbstractMesh;
   collider: PhysicsShapeType;
   position?: Vector3;
   rotation?: Vector3;
@@ -19,7 +20,7 @@ export interface GameObjectParameters {
 
 export default class GameObject {
   protected readonly collider: PhysicsAggregate;
-  protected readonly mesh: Mesh;
+  protected readonly mesh: Mesh | AbstractMesh;
 
   constructor(parameters: GameObjectParameters) {
     this.mesh = parameters.mesh;

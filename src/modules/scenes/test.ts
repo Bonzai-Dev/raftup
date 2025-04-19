@@ -7,19 +7,13 @@ import {
   DirectionalLight,
   StandardMaterial,
   Color3,
-  ImportMeshAsync,
-  PhysicsAggregate,
-  PhysicsShapeBox,
-  Quaternion,
-  PhysicsBody,
-  PhysicsMotionType,
 } from "@babylonjs/core";
-import { registerBuiltInLoaders } from "@babylonjs/loaders/dynamic";
 import "@babylonjs/inspector";
 import { toRad } from "@mathigon/euclid";
 import Scene, { SceneParameters } from "./scene";
 import GameObject from "@/modules/nodes/gameObjects/object";
 import Player from "@/modules/nodes/gameObjects/player";
+import Mesh from "../nodes/gameObjects/mesh";
 
 export default class Test extends Scene {
   constructor(parameters: SceneParameters) {
@@ -27,18 +21,7 @@ export default class Test extends Scene {
   }
 
   protected override async scene() {
-    registerBuiltInLoaders();
     this.camera.position = new Vector3(0, 0, -10);
-
-    const raft = await ImportMeshAsync("/src/assets/models/raft.glb", this);
-    const root = raft.meshes[0];
-    const { min, max } = root.getHierarchyBoundingVectors();
-    const size = max.subtract(min);
-    const center = min.add(max).scale(0.5);
-    const shape = new PhysicsShapeBox(new Vector3(center.x, center.y, center.z), Quaternion.Identity(), size, this);
-    const body = new PhysicsBody(root, PhysicsMotionType.DYNAMIC, false, this);
-    body.shape = shape;
-    body.setMassProperties({mass: 1});
 
     const hemisphericLight = new HemisphericLight("HemisphericLight", new Vector3(1, 1, 0), this);
     hemisphericLight.intensity = 0.6;
@@ -62,11 +45,14 @@ export default class Test extends Scene {
     );
     spotLight2.intensity = 0.5;
 
+    new Mesh("/src/assets/models/raft.glb", "raft");
+
     new GameObject({
       mesh: MeshBuilder.CreatePlane("ground", { size: 500 }, this),
       collider: PhysicsShapeType.MESH,
       position: new Vector3(0, -6, 0),
       rotation: new Vector3(toRad(90), 0, 0),
+      physicsMaterial: { restitution: 0, mass: 0 }
     });
 
     new GameObject({
