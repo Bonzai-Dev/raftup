@@ -17,7 +17,7 @@ interface InputsMap {
   moveLeft: string[];
   moveRight: string[];
   jump: string[];
-  pickup: string[];
+  pickUp: string[];
   drop: string[];
 }
 
@@ -31,6 +31,6 @@ export const inputsMap: InputsMap = {
   moveLeft: ["A"],
   moveRight: ["D"],
   jump: [" "],
-  pickup: ["E"],
+  pickUp: ["E"],
   drop: ["Q"],
 }

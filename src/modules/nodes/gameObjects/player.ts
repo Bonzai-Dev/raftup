@@ -8,13 +8,12 @@ import {
   Ray,
   Mesh,
   AbstractMesh,
-  PhysicsJoint,
-  PhysicsConstraint,
-  PhysicsConstraintType,
+  PhysicsMotionType,
+  Quaternion,
 } from "@babylonjs/core";
 import GameObject, { GameObjectParameters } from "./object";
 import Game from "@/modules/game";
-import { inputsMap, physics, tags } from "@/config";
+import { inputsMap, tags } from "@/config";
 import Inputs from "@/modules/inputs";
 import { toRad } from "@mathigon/euclid";
 
@@ -22,7 +21,8 @@ export default class Player extends GameObject {
   private readonly camera: UniversalCamera;
   private readonly cameraClampDegrees = 5;
   private readonly groundCheckDistance = 0.3;
-  private readonly pickupDistance = 2;
+  private readonly grabRange = 5;
+  private readonly pickUpDistance = 2.5;
 
   private readonly speed: number = 5;
   private readonly jumpForce = 10000;
@@ -31,9 +31,9 @@ export default class Player extends GameObject {
   private readonly deceleration = 11000;
 
   private moveVector = Vector3.Zero();
-  private pickedUpObject: Mesh | AbstractMesh | null = null;
+  private pickedUpObject: Mesh | AbstractMesh | undefined;
 
-  constructor() {
+  constructor(position?: Vector3) {
     const game = Game.getInstance();
     const scene = game.getScene();
 
@@ -45,6 +45,7 @@ export default class Player extends GameObject {
       collider: PhysicsShapeType.CAPSULE,
       physicsMaterial: { mass: 50, restitution: 0, friction: 0 },
       material: playerMaterial,
+      position: position || Vector3.Zero(),
     };
     super(parameters);
 
@@ -109,8 +110,23 @@ export default class Player extends GameObject {
       );
     }
 
-    if (inputs.keyTapped(inputsMap.pickup) && this.canPickup()) {
-      
+    if (inputs.keyTapped(inputsMap.pickUp) && this.pickableInView()) {
+      this.pickUpObject();
+    } else if (this.pickedUpObject) {
+      this.pickedUpObject!.physicsBody?.setTargetTransform(
+        Vector3.Lerp(
+          this.pickedUpObject!.position,
+          this.camera.position.add(this.camera.getDirection(Vector3.Forward()).scale(this.pickUpDistance)),
+          (10 * Game.getInstance().getScene().deltaTime) / 1000
+        ),
+        Quaternion.Zero()
+      );
+
+      if (
+        inputs.keyTapped(inputsMap.drop) ||
+        Vector3.Distance(this.pickedUpObject.position, this.camera.position) > this.pickUpDistance + 2
+      )
+        this.dropObject();
     }
   }
 
@@ -149,32 +165,26 @@ export default class Player extends GameObject {
     }
   }
 
-  private pickupObject(object: Mesh | AbstractMesh) {
-    const joint = new PhysicsConstraint(PhysicsConstraintType.LOCK, {
-      pivotA: Vector3.Zero(),
-      pivotB: Vector3.Zero(),
-      axisA: Vector3.Zero(),
-      axisB: Vector3.Zero(),
-    }, Game.getInstance().getScene());
-    this.collider.body.addConstraint(object.physicsBody!, joint);
-  }
-
-  private dropObject(object: Mesh | AbstractMesh) {
-
-  }
-
-  private canPickup(): boolean {
+  private pickableInView(): Mesh | AbstractMesh | undefined {
     const scene = Game.getInstance().getScene();
-    const ray = new Ray(this.camera.position, this.camera.getDirection(Vector3.Forward()), this.pickupDistance);
+    const ray = new Ray(this.camera.position, this.camera.getDirection(Vector3.Forward()), this.grabRange);
     Ray.Transform(ray, this.camera.getWorldMatrix());
 
     const pickables = scene.getMeshesByTags(tags.pickable);
     for (let i = 0; i < pickables.length; i++) {
-      this.pickupObject(pickables[i]);
-      return ray.intersectsMesh(pickables[i]).hit;
+      const pickable = pickables[i];
+      if (ray.intersectsMesh(pickables[i]).hit) return pickable;
     }
+    return undefined;
+  }
 
-    return false;
+  private dropObject() {
+    this.pickedUpObject!.physicsBody!.setMotionType(PhysicsMotionType.DYNAMIC);
+    this.pickedUpObject = undefined;
+  }
+
+  private pickUpObject() {
+    this.pickedUpObject = this.pickableInView();
   }
 
   private onGround(): boolean {

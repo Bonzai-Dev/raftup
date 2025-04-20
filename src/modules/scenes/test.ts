@@ -45,6 +45,7 @@ export default class Test extends Scene {
     directionalLight.intensity = 0.3;
 
     new Mesh("/src/assets/models/raft.glb", "raft");
+    new Mesh("/src/assets/models/trash/plasticBarrel.glb", "plasticBarrel");
 
     new GameObject({
       mesh: MeshBuilder.CreatePlane("ground", { size: 500 }, this),
@@ -73,10 +74,10 @@ export default class Test extends Scene {
       mesh: MeshBuilder.CreateSphere("ball2", { diameter: 2 }, this),
       collider: PhysicsShapeType.SPHERE,
       physicsMaterial: { mass: 1 },
-      position: new Vector3(10, 5, 0),
+      position: new Vector3(2, 11, 0),
       tags: [tags.pickable],
     });
 
-    new Player();
+    new Player(new Vector3(0, 10, 0));
   }
 }
