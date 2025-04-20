@@ -5,24 +5,33 @@ import {
   StandardMaterial,
   Color3,
   UniversalCamera,
-  Quaternion,
+  Ray,
+  Mesh,
+  AbstractMesh,
+  PhysicsJoint,
+  PhysicsConstraint,
+  PhysicsConstraintType,
 } from "@babylonjs/core";
 import GameObject, { GameObjectParameters } from "./object";
 import Game from "@/modules/game";
-import { inputsMap } from "@/config";
+import { inputsMap, physics, tags } from "@/config";
 import Inputs from "@/modules/inputs";
 import { toRad } from "@mathigon/euclid";
 
 export default class Player extends GameObject {
   private readonly camera: UniversalCamera;
-  private readonly cameraClampDegrees = 10;
+  private readonly cameraClampDegrees = 5;
+  private readonly groundCheckDistance = 0.3;
+  private readonly pickupDistance = 2;
 
   private readonly speed: number = 5;
-  private readonly counterForce = 15000;
-  private readonly acceleration = 20000;
+  private readonly jumpForce = 10000;
+  private readonly counterForce = 25000;
+  private readonly acceleration = 30000;
   private readonly deceleration = 11000;
 
   private moveVector = Vector3.Zero();
+  private pickedUpObject: Mesh | AbstractMesh | null = null;
 
   constructor() {
     const game = Game.getInstance();
@@ -34,7 +43,7 @@ export default class Player extends GameObject {
     const parameters: GameObjectParameters = {
       mesh: MeshBuilder.CreateCapsule("Player", { height: 2, radius: 0.5 }, scene),
       collider: PhysicsShapeType.CAPSULE,
-      physicsMaterial: { mass: 1, restitution: 0, friction: 0 },
+      physicsMaterial: { mass: 50, restitution: 0, friction: 0 },
       material: playerMaterial,
     };
     super(parameters);
@@ -57,10 +66,10 @@ export default class Player extends GameObject {
       );
 
       if (scene.getFreeCameraEnabled()) return;
-      const cameraLookDirection = this.camera.getDirection(Vector3.Forward());
-
+      this.handleInputs();
       this.movePlayer();
 
+      const cameraLookDirection = this.camera.getDirection(Vector3.Forward());
       this.camera.position = new Vector3(
         this.mesh.position.x,
         this.mesh.position.y + glasses.position.y,
@@ -72,21 +81,16 @@ export default class Player extends GameObject {
     });
   }
 
-  private movePlayer() {
+  private handleInputs() {
     const inputs = Inputs.getInstance();
     const cameraRightDirection = this.camera.getDirection(Vector3.Right());
     const playerLookDirection = this.mesh.getDirection(Vector3.Forward());
 
     let currentMoveDirection = new Vector3();
-    if (inputs.keysDown(inputsMap.moveForward)) currentMoveDirection.z += 1;
-    if (inputs.keysDown(inputsMap.moveBackward)) currentMoveDirection.z -= 1;
-    if (inputs.keysDown(inputsMap.moveLeft)) currentMoveDirection.x -= 1;
-    if (inputs.keysDown(inputsMap.moveRight)) currentMoveDirection.x += 1;
-    if (inputs.keysDown(inputsMap.jump) && this.onGround())
-      this.collider.body.applyForce(
-        new Vector3((this.moveVector.x * this.acceleration) / 2, 500000, (this.moveVector.x * this.acceleration) / 2),
-        this.mesh.position
-      );
+    if (inputs.keyDown(inputsMap.moveForward)) currentMoveDirection.z += 1;
+    if (inputs.keyDown(inputsMap.moveBackward)) currentMoveDirection.z -= 1;
+    if (inputs.keyDown(inputsMap.moveLeft)) currentMoveDirection.x -= 1;
+    if (inputs.keyDown(inputsMap.moveRight)) currentMoveDirection.x += 1;
 
     currentMoveDirection = cameraRightDirection
       .scale(currentMoveDirection.x)
@@ -94,6 +98,23 @@ export default class Player extends GameObject {
     currentMoveDirection.normalize();
     this.moveVector = currentMoveDirection;
 
+    if (inputs.keyTapped(inputsMap.jump) && this.onGround()) {
+      this.collider.body.applyImpulse(
+        new Vector3(
+          (this.moveVector.x * this.acceleration) / 2,
+          this.jumpForce,
+          (this.moveVector.z * this.acceleration) / 2
+        ),
+        this.mesh.position
+      );
+    }
+
+    if (inputs.keyTapped(inputsMap.pickup) && this.canPickup()) {
+      
+    }
+  }
+
+  private movePlayer() {
     // Counter force
     if (!this.onGround()) {
       this.collider.body.applyForce(
@@ -128,12 +149,40 @@ export default class Player extends GameObject {
     }
   }
 
+  private pickupObject(object: Mesh | AbstractMesh) {
+    const joint = new PhysicsConstraint(PhysicsConstraintType.LOCK, {
+      pivotA: Vector3.Zero(),
+      pivotB: Vector3.Zero(),
+      axisA: Vector3.Zero(),
+      axisB: Vector3.Zero(),
+    }, Game.getInstance().getScene());
+    this.collider.body.addConstraint(object.physicsBody!, joint);
+  }
+
+  private dropObject(object: Mesh | AbstractMesh) {
+
+  }
+
+  private canPickup(): boolean {
+    const scene = Game.getInstance().getScene();
+    const ray = new Ray(this.camera.position, this.camera.getDirection(Vector3.Forward()), this.pickupDistance);
+    Ray.Transform(ray, this.camera.getWorldMatrix());
+
+    const pickables = scene.getMeshesByTags(tags.pickable);
+    for (let i = 0; i < pickables.length; i++) {
+      this.pickupObject(pickables[i]);
+      return ray.intersectsMesh(pickables[i]).hit;
+    }
+
+    return false;
+  }
+
   private onGround(): boolean {
     const physicsEngine = Game.getInstance().getScene().getPhysicsEngine()!;
-    const rayEnd = this.mesh.position.subtract(new Vector3(0, 1.1, 0));
+    const rayEnd = this.mesh.position.subtract(new Vector3(0, 1 + this.groundCheckDistance, 0));
     return (
       physicsEngine.raycast(this.mesh.position, rayEnd, { collideWith: 1 }).hasHit &&
-      this.collider.body.getLinearVelocity().y <= 0.1
+      Math.abs(this.collider.body.getLinearVelocity().y) <= 0.1
     );
   }
 }

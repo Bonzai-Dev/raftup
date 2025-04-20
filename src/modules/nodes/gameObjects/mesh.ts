@@ -18,8 +18,6 @@ export default class Mesh {
   constructor(src: string, name: string) {
     this.loadMesh(src, name);
     this.mesh = this.meshRootNode as AbstractMesh;
-
-    // this.collider =
   }
 
   private async loadMesh(src: string, name: string) {
@@ -31,15 +29,18 @@ export default class Mesh {
     root.parent = newRoot;
 
     const { min, max } = newRoot.getHierarchyBoundingVectors();
-
     const size = max.subtract(min);
     const center = min.add(max).scale(0.5);
 
     const shape = new PhysicsShapeBox(new Vector3(center.x, center.y, center.z), Quaternion.Identity(), size, scene);
-
     const body = new PhysicsBody(newRoot, PhysicsMotionType.DYNAMIC, false, scene);
     body.shape = shape;
     body.setMassProperties({ mass: 5000 });
+
+    for (let i = 0; i < mesh.meshes.length; i++) {
+      const child = mesh.meshes[i];
+      child.receiveShadows = true;
+    }
 
     return shape;
   }
