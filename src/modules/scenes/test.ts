@@ -2,12 +2,10 @@ import {
   PhysicsShapeType,
   MeshBuilder,
   Vector3,
-  SpotLight,
   HemisphericLight,
   DirectionalLight,
   StandardMaterial,
   Color3,
-  Tags,
 } from "@babylonjs/core";
 import "@babylonjs/inspector";
 import { toRad } from "@mathigon/euclid";
@@ -44,8 +42,25 @@ export default class Test extends Scene {
     directionalLight.position = new Vector3(20, 10, 20);
     directionalLight.intensity = 0.3;
 
-    new Mesh("/src/assets/models/raft.glb", "raft");
-    new Mesh("/src/assets/models/trash/plasticBarrel.glb", "plasticBarrel");
+    new Mesh("/src/assets/models/raft.glb", "raft", {
+      collider: PhysicsShapeType.BOX,
+      position: new Vector3(0, 0, 0),
+      physicsMaterial: { mass: 50000, restitution: 0 },
+    });
+
+    new Mesh("/src/assets/models/trash/constructionBarrel.glb", "constructionBarrel", {
+      collider: PhysicsShapeType.CYLINDER,
+      position: new Vector3(5, 10, 0),
+      physicsMaterial: { mass: 50000, restitution: 0 },
+      tags: [tags.pickable],
+    });
+
+    new Mesh("/src/assets/models/trash/plasticBarrel.glb", "plasticBarrel", {
+      collider: PhysicsShapeType.CYLINDER,
+      position: new Vector3(5, 5, 5),
+      physicsMaterial: { mass: 5000, restitution: 0.5 },
+      tags: [tags.pickable],
+    });
 
     new GameObject({
       mesh: MeshBuilder.CreatePlane("ground", { size: 500 }, this),

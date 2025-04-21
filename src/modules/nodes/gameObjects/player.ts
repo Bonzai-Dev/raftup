@@ -10,6 +10,7 @@ import {
   AbstractMesh,
   PhysicsMotionType,
   Quaternion,
+  RayHelper,
 } from "@babylonjs/core";
 import GameObject, { GameObjectParameters } from "./object";
 import Game from "@/modules/game";
@@ -20,15 +21,17 @@ import { toRad } from "@mathigon/euclid";
 export default class Player extends GameObject {
   private readonly camera: UniversalCamera;
   private readonly cameraClampDegrees = 5;
+
+  private readonly playerHeight: number;
   private readonly groundCheckDistance = 0.3;
   private readonly grabRange = 5;
   private readonly pickUpDistance = 2.5;
 
   private readonly speed: number = 5;
-  private readonly jumpForce = 10000;
-  private readonly counterForce = 25000;
+  private readonly jumpForce = 20000;
+  private readonly counterForce = 17000;
   private readonly acceleration = 30000;
-  private readonly deceleration = 11000;
+  private readonly deceleration = 5;
 
   private moveVector = Vector3.Zero();
   private pickedUpObject: Mesh | AbstractMesh | undefined;
@@ -41,7 +44,7 @@ export default class Player extends GameObject {
     playerMaterial.diffuseColor = new Color3(1, 0.584, 0);
 
     const parameters: GameObjectParameters = {
-      mesh: MeshBuilder.CreateCapsule("Player", { height: 2, radius: 0.5 }, scene),
+      mesh: MeshBuilder.CreateCapsule("Player", { height: 3.4, radius: 0.5 }, scene),
       collider: PhysicsShapeType.CAPSULE,
       physicsMaterial: { mass: 50, restitution: 0, friction: 0 },
       material: playerMaterial,
@@ -53,11 +56,14 @@ export default class Player extends GameObject {
 
     const glasses = MeshBuilder.CreateBox("Glasses", { height: 0.25, width: 0.8, depth: 0.6 }, scene);
     glasses.parent = this.mesh;
-    glasses.position.y = 0.6;
+    glasses.position.y = 1;
     glasses.position.z = -0.25;
     this.collider.body.setMassProperties({ inertia: Vector3.Zero() });
 
     this.collider.body.shape!.filterMembershipMask = 2;
+
+    const boundingInfo = this.mesh.getBoundingInfo();
+    this.playerHeight = boundingInfo.boundingBox.maximumWorld.y - boundingInfo.boundingBox.minimumWorld.y;
 
     scene.registerBeforeRender(() => {
       const cameraRotation = this.camera.rotation;
@@ -100,12 +106,9 @@ export default class Player extends GameObject {
     this.moveVector = currentMoveDirection;
 
     if (inputs.keyTapped(inputsMap.jump) && this.onGround()) {
+      this.collider.body.setLinearDamping(0);
       this.collider.body.applyImpulse(
-        new Vector3(
-          (this.moveVector.x * this.acceleration) / 2,
-          this.jumpForce,
-          (this.moveVector.z * this.acceleration) / 2
-        ),
+        new Vector3(this.moveVector.x * this.acceleration, this.jumpForce, this.moveVector.z * this.acceleration),
         this.mesh.position
       );
     }
@@ -123,8 +126,8 @@ export default class Player extends GameObject {
       );
 
       if (
-        inputs.keyTapped(inputsMap.drop) ||
-        Vector3.Distance(this.pickedUpObject.position, this.camera.position) > this.pickUpDistance + 2
+        inputs.keyTapped(inputsMap.drop) //||
+        // Vector3.Distance(this.pickedUpObject.position, this.camera.position) > this.pickUpDistance + 2
       )
         this.dropObject();
     }
@@ -141,15 +144,9 @@ export default class Player extends GameObject {
 
     // Movement
     if (this.moveVector.length() === 0 && this.onGround()) {
-      this.collider.body.applyForce(
-        new Vector3(
-          -this.collider.body.getLinearVelocity().x * this.deceleration,
-          0,
-          -this.collider.body.getLinearVelocity().z * this.deceleration
-        ),
-        this.mesh.position
-      );
-    } else {
+      this.collider.body.setLinearDamping(this.deceleration);
+    } else if (this.moveVector.length() > 0) {
+      this.collider.body.setLinearDamping(0);
       this.collider.body.applyForce(
         new Vector3(this.moveVector.x * this.acceleration, 0, this.moveVector.z * this.acceleration),
         this.mesh.position
@@ -171,25 +168,27 @@ export default class Player extends GameObject {
     Ray.Transform(ray, this.camera.getWorldMatrix());
 
     const pickables = scene.getMeshesByTags(tags.pickable);
-    for (let i = 0; i < pickables.length; i++) {
-      const pickable = pickables[i];
-      if (ray.intersectsMesh(pickables[i]).hit) return pickable;
+    for (let pickableIndex = 0; pickableIndex < pickables.length; pickableIndex++) {
+      const pickable = pickables[pickableIndex];
+      if (ray.intersectsMesh(pickables[pickableIndex]).hit) return pickable;
     }
     return undefined;
   }
 
   private dropObject() {
-    this.pickedUpObject!.physicsBody!.setMotionType(PhysicsMotionType.DYNAMIC);
+    this.pickedUpObject!.physicsBody!.setLinearVelocity(Vector3.Zero());
+    // this.pickedUpObject!.physicsBody!.setMotionType(PhysicsMotionType.DYNAMIC);
     this.pickedUpObject = undefined;
   }
 
   private pickUpObject() {
     this.pickedUpObject = this.pickableInView();
+    // this.pickedUpObject!.physicsBody!.setMotionType(PhysicsMotionType.ANIMATED);
   }
 
   private onGround(): boolean {
     const physicsEngine = Game.getInstance().getScene().getPhysicsEngine()!;
-    const rayEnd = this.mesh.position.subtract(new Vector3(0, 1 + this.groundCheckDistance, 0));
+    const rayEnd = this.mesh.position.subtract(new Vector3(0, this.playerHeight + this.groundCheckDistance, 0));
     return (
       physicsEngine.raycast(this.mesh.position, rayEnd, { collideWith: 1 }).hasHit &&
       Math.abs(this.collider.body.getLinearVelocity().y) <= 0.1

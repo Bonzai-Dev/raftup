@@ -111,8 +111,8 @@ export default class Scene extends BabylonScene {
       gizmosManager.rotationGizmoEnabled = true;
     }
     
-    for (let i = 0; i < this.lights.length; i++) {
-      const light = this.lights[i];
+    for (let lightIndex = 0; lightIndex < this.lights.length; lightIndex++) {
+      const light = this.lights[lightIndex];
       if (this.debugMode) {
         const gizmo = new LightGizmo();
         gizmo.light = light;

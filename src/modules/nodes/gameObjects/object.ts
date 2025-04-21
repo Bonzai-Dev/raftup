@@ -3,19 +3,20 @@ import {
   Mesh,
   PhysicsAggregate,
   PhysicsShapeType,
-  PhysicsAggregateParameters,
   StandardMaterial,
   AbstractMesh,
-  Tags
+  Tags,
+  PhysicsAggregateParameters
 } from "@babylonjs/core";
+import { PhysicsMaterial } from "@/types/PhysicsMaterial";
 import Game from "@/modules/game";
 
 export interface GameObjectParameters {
-  mesh: Mesh | AbstractMesh;
+  mesh?: Mesh | AbstractMesh;
   collider: PhysicsShapeType;
   position?: Vector3;
   rotation?: Vector3;
-  physicsMaterial?: PhysicsAggregateParameters;
+  physicsMaterial?: PhysicsMaterial;
   material?: StandardMaterial;
   tags?: string[];
 }
@@ -26,20 +27,20 @@ export default class GameObject {
   protected readonly tags: string[] = [];
 
   constructor(parameters: GameObjectParameters) {
-    this.mesh = parameters.mesh;
+    this.mesh = parameters.mesh as Mesh | AbstractMesh;
     this.mesh.position = parameters.position || Vector3.Zero();
     this.mesh.rotation = parameters.rotation || Vector3.Zero();
 
     this.mesh.material = parameters.material || Game.getInstance().getScene().defaultMaterial;
     this.mesh.receiveShadows = true;
 
-    for (let i = 0; i < (parameters.tags || []).length; i++)
-      Tags.AddTagsTo(this.mesh, parameters.tags![i]);
+    for (let tagIndex = 0; tagIndex < (parameters.tags || []).length; tagIndex++)
+      Tags.AddTagsTo(this.mesh, parameters.tags![tagIndex]);
 
     this.collider = new PhysicsAggregate(
       this.mesh,
       parameters.collider,
-      parameters.physicsMaterial,
+      parameters.physicsMaterial as PhysicsAggregateParameters,
     );
   }
 

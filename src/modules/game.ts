@@ -1,6 +1,7 @@
 import { Engine } from "@babylonjs/core";
 import { AdvancedDynamicTexture } from "@babylonjs/gui";
 import Test from "@/modules/scenes/test";
+import Ocean from "@/modules/scenes/ocean";
 import GameScene from "./scenes/scene";
 
 export default class Game {
@@ -15,7 +16,7 @@ export default class Game {
     document.body.appendChild(this.canvas);
 
     this.engine = new Engine(this.canvas, true);
-    this.scene = new Test({ engine: this.engine, canvas: this.canvas });
+    this.scene = new Ocean({ engine: this.engine, canvas: this.canvas });
     this.gui = AdvancedDynamicTexture.CreateFullscreenUI("UI");
     this.loadGame();
   }

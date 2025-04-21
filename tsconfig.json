@@ -24,6 +24,9 @@
       "@/*": ["./src/*"],
       "@/public/*": ["./public/*"],
     },
+    "types": [
+      "vite-plugin-glsl/ext"
+    ]
   },
   "include": ["src"]
 }
