@@ -33,7 +33,7 @@ export default class Test extends Scene {
 
     const hemisphericLight = new HemisphericLight("HemisphericLight", new Vector3(1, 1, 0), this);
     hemisphericLight.intensity = 0.6;
-    const directionalLight = new DirectionalLight("DirectionalLight", new Vector3(-1, -2, -1), this);
+    const directionalLight = new DirectionalLight("DirectionalLight", new Vector3(-5, -2, -1), this);
     directionalLight.position = new Vector3(20, 10, 20);
     directionalLight.intensity = 0.3;
 
