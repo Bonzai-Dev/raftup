@@ -45,11 +45,11 @@ export default class Ocean {
 
     let totalTime = 0;
     shaderMaterial.setColor3("baseColor", new Color3(0.247, 0.278, 0.988));
-    shaderMaterial.setVector2("wave1Values", new Vector2(0.6, 0.2));
-    shaderMaterial.setVector2("wave2Values", new Vector2(0.2, 0.5));
-    shaderMaterial.setVector2("wave3Values", new Vector2(0.3, 0.2));
-    shaderMaterial.setFloat("shininess", 10);
-    shaderMaterial.setFloat("specularStrength", 2);
+    shaderMaterial.setVector2("wave1Values", new Vector2(0.6, 0.8));
+    shaderMaterial.setVector2("wave2Values", new Vector2(0.2, 1));
+    shaderMaterial.setVector2("wave3Values", new Vector2(0.3, 0.5));
+    shaderMaterial.setFloat("shininess", 16);
+    shaderMaterial.setFloat("specularStrength", 0.5);
     shaderMaterial.setVector3("lightPosition", directionalLight!.position!);
     shaderMaterial.setVector3("ambientColor", new Vector3(0.18, 0.18, 0.302));
 
@@ -57,7 +57,7 @@ export default class Ocean {
       totalTime += scene.getEngine().getDeltaTime() / 1000;
       shaderMaterial.setFloat("time", totalTime);
       shaderMaterial.setVector3("lightDirection", directionalLight!.direction!.normalize());
-      shaderMaterial.setVector3("cameraPosition", camera.position);
+      shaderMaterial.setVector3("cameraLookDirection", camera.getDirection(Vector3.Forward()));
     });
   }
 }

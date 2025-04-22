@@ -8,10 +8,25 @@ uniform vec2 wave3Values;
 
 attribute vec3 position;
 varying vec3 waveNormal;
-varying vec3 wavePosition;
 
 float wave(float speed, float height) {
-	return sin(position.x * speed + time) * height;
+	return pow(2., sin(position.x * speed + time) * height);
+}
+
+float partialDerivativeX(vec2 waveValues) {
+	float speed = waveValues.x;
+	float height = waveValues.y;
+	float u = sin(position.x * speed + time) * height;
+	float du_dx = cos(position.x * speed + time) * speed * height;
+	return log(2.0) * pow(2.0, u) * du_dx;
+}
+
+float partialDerivativeZ(vec2 waveValues) {
+	float speed = waveValues.x;
+	float height = waveValues.y;
+	float u = sin(position.z * speed + time) * height;
+	float du_dz = cos(position.z * speed + time) * speed * height;
+	return log(2.0) * pow(2.0, u) * du_dz;
 }
 
 void main() {
@@ -21,17 +36,18 @@ void main() {
 	float displacement = wave1 + wave2 + wave3;
 
 	// Chatgpt cook idk calculus so yeah
-	float dhdx = wave1Values.y * wave1Values.x * cos(position.x * wave1Values.x + time) +
-		wave2Values.y * wave2Values.x * cos(position.x * wave2Values.x + time) +
-		wave3Values.y * wave3Values.x * cos(position.x * wave3Values.x + time);
-	float dhdz = wave1Values.y * wave1Values.x * cos(position.z * wave1Values.x + time) +
-		wave2Values.y * wave2Values.x * cos(position.z * wave2Values.x + time) +
-		wave3Values.y * wave3Values.x * cos(position.z * wave3Values.x + time);
+	float dhdx = partialDerivativeX(wave1Values) +
+		partialDerivativeX(wave2Values) +
+		partialDerivativeX(wave3Values);
+
+	float dhdz = partialDerivativeZ(wave1Values) +
+		partialDerivativeZ(wave2Values) +
+		partialDerivativeZ(wave3Values);
 
 	vec3 tangentX = vec3(1.0, dhdx, 0.0);
-	vec3 tangentZ = vec3(0.0, 0, 1.0);
-
+	vec3 tangentZ = vec3(0.0, dhdz, 1.0);
 	waveNormal = normalize(cross(tangentX, tangentZ));
-	wavePosition = vec3(position.x, position.y + displacement, position.z);
+
+	vec3 wavePosition = vec3(position.x, position.y + displacement, position.z);
 	gl_Position = worldViewProjection * vec4(wavePosition, 1.0);
 }
