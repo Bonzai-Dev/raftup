@@ -1,4 +1,4 @@
-import { Color3, Color4, DirectionalLight, MeshBuilder, ShaderMaterial, Vector2, Vector4 } from "@babylonjs/core";
+import { Color3, Color4, DirectionalLight, MeshBuilder, ShaderMaterial, Vector2, Vector3, Vector4 } from "@babylonjs/core";
 import Game from "@/modules/game";
 import oceanVertexShader from "@/assets/shaders/ocean/ocean.vert";
 import oceanFragmentShader from "@/assets/shaders/ocean/ocean.frag";
@@ -23,9 +23,11 @@ export default class Ocean {
           "time",
           "lightDirection",
           "baseColor",
+          "ambientColor",
           "cameraPosition",
           "shininess",
           "specularStrength",
+          "lightPosition",
           "wave1Values",
           "wave2Values",
           "wave3Values",
@@ -46,8 +48,10 @@ export default class Ocean {
     shaderMaterial.setVector2("wave1Values", new Vector2(0.6, 0.2));
     shaderMaterial.setVector2("wave2Values", new Vector2(0.2, 0.5));
     shaderMaterial.setVector2("wave3Values", new Vector2(0.3, 0.2));
-    shaderMaterial.setFloat("shininess", 1);
-    shaderMaterial.setFloat("specularStrength", 0.8);
+    shaderMaterial.setFloat("shininess", 10);
+    shaderMaterial.setFloat("specularStrength", 2);
+    shaderMaterial.setVector3("lightPosition", directionalLight!.position!);
+    shaderMaterial.setVector3("ambientColor", new Vector3(0.18, 0.18, 0.302));
 
     scene.registerBeforeRender(() => {
       totalTime += scene.getEngine().getDeltaTime() / 1000;

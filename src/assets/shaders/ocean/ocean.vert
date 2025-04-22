@@ -8,7 +8,7 @@ uniform vec2 wave3Values;
 
 attribute vec3 position;
 varying vec3 waveNormal;
-varying vec3 displacedPosition;
+varying vec3 wavePosition;
 
 float wave(float speed, float height) {
 	return sin(position.x * speed + time) * height;
@@ -32,6 +32,6 @@ void main() {
 	vec3 tangentZ = vec3(0.0, 0, 1.0);
 
 	waveNormal = normalize(cross(tangentX, tangentZ));
-	displacedPosition = vec3(position.x, position.y + displacement, position.z);
-	gl_Position = worldViewProjection * vec4(displacedPosition, 1.0);
+	wavePosition = vec3(position.x, position.y + displacement, position.z);
+	gl_Position = worldViewProjection * vec4(wavePosition, 1.0);
 }
