@@ -8,7 +8,6 @@ uniform vec3 cameraLookDirection;
 
 uniform float shininess;
 uniform float specularStrength;
-
 varying vec3 waveNormal;
 
 float lambertDiffuse() {

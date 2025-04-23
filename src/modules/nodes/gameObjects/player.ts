@@ -14,7 +14,7 @@ import {
 } from "@babylonjs/core";
 import GameObject, { GameObjectParameters } from "./object";
 import Game from "@/modules/game";
-import { inputsMap, tags } from "@/config";
+import { inputsMap, physics, tags } from "@/config";
 import Inputs from "@/modules/inputs";
 import { toRad } from "@mathigon/euclid";
 
@@ -23,7 +23,7 @@ export default class Player extends GameObject {
   private readonly cameraClampDegrees = 5;
 
   private readonly playerHeight: number;
-  private readonly groundCheckDistance = 0.3;
+  private readonly groundCheckDistance = 0.6;
   private readonly grabRange = 5;
   private readonly pickUpDistance = 2.5;
 
@@ -31,7 +31,6 @@ export default class Player extends GameObject {
   private readonly jumpForce = 20000;
   private readonly counterForce = 17000;
   private readonly acceleration = 30000;
-  private readonly deceleration = 5;
 
   private moveVector = Vector3.Zero();
   private pickedUpObject: Mesh | AbstractMesh | undefined;
@@ -46,7 +45,7 @@ export default class Player extends GameObject {
     const parameters: GameObjectParameters = {
       mesh: MeshBuilder.CreateCapsule("Player", { height: 3.4, radius: 0.5 }, scene),
       collider: PhysicsShapeType.CAPSULE,
-      physicsMaterial: { mass: 50, restitution: 0, friction: 0 },
+      physicsMaterial: { mass: 1, restitution: 0, friction: 0.1 },
       material: playerMaterial,
       position: position || Vector3.Zero(),
     };
@@ -144,9 +143,9 @@ export default class Player extends GameObject {
 
     // Movement
     if (this.moveVector.length() === 0 && this.onGround()) {
-      this.collider.body.setLinearDamping(this.deceleration);
+
     } else if (this.moveVector.length() > 0) {
-      this.collider.body.setLinearDamping(0);
+      // Apply movement force
       this.collider.body.applyForce(
         new Vector3(this.moveVector.x * this.acceleration, 0, this.moveVector.z * this.acceleration),
         this.mesh.position
@@ -191,7 +190,7 @@ export default class Player extends GameObject {
     const rayEnd = this.mesh.position.subtract(new Vector3(0, this.playerHeight + this.groundCheckDistance, 0));
     return (
       physicsEngine.raycast(this.mesh.position, rayEnd, { collideWith: 1 }).hasHit &&
-      Math.abs(this.collider.body.getLinearVelocity().y) <= 0.1
+      Math.abs(this.collider.body.getLinearVelocity().y) <= 1
     );
   }
 }

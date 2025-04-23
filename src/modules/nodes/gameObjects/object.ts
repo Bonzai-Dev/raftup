@@ -33,6 +33,7 @@ export default class GameObject {
 
     this.mesh.material = parameters.material || Game.getInstance().getScene().defaultMaterial;
     this.mesh.receiveShadows = true;
+    this.mesh.isPickable = false;
 
     for (let tagIndex = 0; tagIndex < (parameters.tags || []).length; tagIndex++)
       Tags.AddTagsTo(this.mesh, parameters.tags![tagIndex]);

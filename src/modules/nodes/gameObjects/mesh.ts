@@ -1,6 +1,5 @@
 import { importGlb } from "@/utils/meshImport";
 import {
-  Mesh as BabylonMesh,
   MeshBuilder,
   PhysicsBody,
   PhysicsMotionType,
@@ -14,11 +13,13 @@ import { GameObjectParameters } from "./object";
 
 export default class Mesh {
   protected readonly tags: string[] = [];
+  protected readonly startPosition: Vector3;
   protected collider: PhysicsShape | undefined;
   protected mesh: TransformNode | undefined;
 
   constructor(src: string, name: string, parameters: GameObjectParameters) {
     this.tags = parameters.tags || [];
+    this.startPosition = this.mesh?.position || new Vector3(0, 0, 0);
     this.loadMesh(src, name, parameters);
   }
 
@@ -71,7 +72,10 @@ export default class Mesh {
     for (let meshIndex = 0; meshIndex < model.meshes.length; meshIndex++) {
       model.meshes[meshIndex].receiveShadows = true;
       model.meshes[meshIndex].isPickable = true;
-      
     }
+  }
+
+  public getStartPosition(): Vector3 {
+    return this.startPosition;
   }
 }

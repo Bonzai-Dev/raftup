@@ -7,6 +7,7 @@ export const physics: PhysicsSettings = {
 
 export const tags = {
   pickable: "pickable",
+  floating: "floatingObject"
 }
 
 interface InputsMap {

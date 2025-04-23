@@ -167,7 +167,7 @@ export default class Scene extends BabylonScene {
 
   private async loadPhysics() {
     const havokInstance = await HavokPhysics();
-    const havokPlugin = new HavokPlugin(true, havokInstance);
+    const havokPlugin = new HavokPlugin(false, havokInstance);
     this.enablePhysics(physics.gravity, havokPlugin);
   }
 
