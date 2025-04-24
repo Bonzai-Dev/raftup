@@ -13,7 +13,7 @@ import { tags } from "@/config";
 import Scene, { SceneParameters } from "./scene";
 import Game from "@/modules/game";
 import Ocean from "@/modules/nodes/gameObjects/ocean";
-import Mesh from "@/modules/nodes/gameObjects/mesh";
+import Mesh from "@/modules/nodes/gameObjects/meshes/mesh";
 import Player from "@/modules/nodes/gameObjects/player";
 import GameObject from "../nodes/gameObjects/object";
 import { toRad } from "@mathigon/euclid";
@@ -49,16 +49,23 @@ export default class Test extends Scene {
     new Mesh("/src/assets/models/raft.glb", "raft", {
       collider: PhysicsShapeType.BOX,
       position: new Vector3(0, -10, 0),
+      physicsMaterial: { mass: 500000, restitution: 0, friction: 1 },
+      tags: [tags.floating],
+    });
+  
+    new Mesh("/src/assets/models/trash/constructionBarrel.glb", "constructionBarrel", {
+      collider: PhysicsShapeType.CYLINDER,
+      position: new Vector3(5, -10, 5),
       physicsMaterial: { mass: 5000, restitution: 0, friction: 1 },
-      tags: [tags.floating]
+      tags: [tags.floating, tags.pickable],
     });
 
-    // new Mesh("/src/assets/models/trash/constructionBarrel.glb", "barrel", {
-    //   collider: PhysicsShapeType.CYLINDER,
-    //   position: new Vector3(5, -10, 5),
-    //   physicsMaterial: { mass: 5000, restitution: 0, friction: 1 },
-    //   tags: [tags.floating, tags.pickable]
-    // })
+    new Mesh("/src/assets/models/trash/plasticBarrel.glb", "plasticBarrel", {
+      collider: PhysicsShapeType.CYLINDER,
+      position: new Vector3(-5, -10, 5),
+      physicsMaterial: { mass: 5000, restitution: 0, friction: 1 },
+      tags: [tags.floating, tags.pickable],
+    });
 
     new Player(new Vector3(0, 2, 0));
   }

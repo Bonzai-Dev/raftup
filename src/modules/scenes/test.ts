@@ -12,7 +12,7 @@ import { toRad } from "@mathigon/euclid";
 import Scene, { SceneParameters } from "./scene";
 import GameObject from "@/modules/nodes/gameObjects/object";
 import Player from "@/modules/nodes/gameObjects/player";
-import Mesh from "@/modules/nodes/gameObjects/mesh";
+import Mesh from "@/modules/nodes/gameObjects/meshes/mesh";
 import Game from "@/modules/game";
 import { Control, Image } from "@babylonjs/gui";
 import { tags } from "@/config";

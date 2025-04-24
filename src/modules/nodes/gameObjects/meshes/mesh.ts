@@ -9,18 +9,17 @@ import {
   Vector3,
 } from "@babylonjs/core";
 import Game from "@/modules/game";
-import { GameObjectParameters } from "./object";
+import { GameObjectParameters } from "../object";
 
 export default class Mesh {
   protected readonly tags: string[] = [];
-  protected readonly startPosition: Vector3;
   protected collider: PhysicsShape | undefined;
   protected mesh: TransformNode | undefined;
+  public readonly loadingPromise: Promise<void>;
 
   constructor(src: string, name: string, parameters: GameObjectParameters) {
     this.tags = parameters.tags || [];
-    this.startPosition = this.mesh?.position || new Vector3(0, 0, 0);
-    this.loadMesh(src, name, parameters);
+    this.loadingPromise = this.loadMesh(src, name, parameters);
   }
 
   private async loadMesh(src: string, name: string, parameters: GameObjectParameters) {
@@ -39,6 +38,9 @@ export default class Mesh {
     newRoot.position = center;
     root.parent = newRoot;
     newRoot.visibility = 0;
+    
+    newRoot.position = parameters.position || Vector3.Zero();
+    newRoot.rotation = parameters.rotation || Vector3.Zero();
 
     const shape = new PhysicsShape(
       {
@@ -73,9 +75,5 @@ export default class Mesh {
       model.meshes[meshIndex].receiveShadows = true;
       model.meshes[meshIndex].isPickable = true;
     }
-  }
-
-  public getStartPosition(): Vector3 {
-    return this.startPosition;
   }
 }

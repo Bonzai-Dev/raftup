@@ -1,4 +1,4 @@
-import { Engine } from "@babylonjs/core";
+import { AudioEngineV2, Engine } from "@babylonjs/core";
 import { AdvancedDynamicTexture } from "@babylonjs/gui";
 import Test from "@/modules/scenes/test";
 import Ocean from "@/modules/scenes/ocean";
@@ -9,12 +9,13 @@ export default class Game {
   private scene: GameScene;
   private readonly gui: AdvancedDynamicTexture;
   private readonly engine: Engine;
+  private readonly audioEngine: AudioEngineV2;
   private readonly canvas: HTMLCanvasElement;
 
   private constructor() {
     this.canvas = document.createElement("canvas");
     document.body.appendChild(this.canvas);
-
+    
     this.engine = new Engine(this.canvas, true);
     this.scene = new Ocean({ engine: this.engine, canvas: this.canvas });
     this.gui = AdvancedDynamicTexture.CreateFullscreenUI("UI");

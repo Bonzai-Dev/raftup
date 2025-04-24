@@ -1,8 +1,8 @@
-import { Color3, DirectionalLight, MeshBuilder, Quaternion, ShaderMaterial, Vector2, Vector3 } from "@babylonjs/core";
+import { Axis, Color3, DirectionalLight, MeshBuilder, Quaternion, ShaderMaterial, Vector2, Vector3 } from "@babylonjs/core";
 import Game from "@/modules/game";
 import oceanVertexShader from "@/assets/shaders/ocean/ocean.vert";
 import oceanFragmentShader from "@/assets/shaders/ocean/ocean.frag";
-import { tags } from "@/config";
+import { physics, tags } from "@/config";
 import * as dat from "dat.gui";
 
 export default class Ocean {
@@ -10,9 +10,9 @@ export default class Ocean {
   private readonly windDirection = new Vector2(0.5, 0); // NOT WORKING
 
   // Wave values, X for frequency, Y for height
-  private readonly wave1Values = new Vector2(0.6, 0.3); // 0.6, 0.8
-  private readonly wave2Values = new Vector2(0.2, 0.1); // 0.2, 1
-  private readonly wave3Values = new Vector2(0.3, 0.2); // 0.3, 0.5
+  private readonly wave1Values = new Vector2(0.01, 0.01); // 0.6, 0.8
+  private readonly wave2Values = new Vector2(0.01, 0.01); // 0.2, 1
+  private readonly wave3Values = new Vector2(0.01, 0.01); // 0.3, 0.5
 
   private readonly baseColor = new Color3(0, 0.506, 0.62);
   private readonly ambientColor = new Color3(0.212, 0.314, 0.322);
@@ -94,23 +94,20 @@ export default class Ocean {
 
         const partialDerivativeX = this.partialDerivativeX(this.wave1Values.x, this.wave1Values.y, objectPosition);
         const partialDerivativeZ = this.partialDerivativeZ(this.wave1Values.x, this.wave1Values.y, objectPosition);
-        const normal = this.waveNormal(partialDerivativeX, partialDerivativeZ);
 
         const physicsBody = object.physicsBody!;
+        const normal = this.waveNormal(partialDerivativeX, partialDerivativeZ);
         const targetY = wave1 + wave2 + wave3 + 0.5 - Math.abs(this.oceanPositionY);
-        object.physicsBody!.setTargetTransform(
-          new Vector3(objectPosition.x, targetY, objectPosition.z),
-          object.rotationQuaternion!
-        );
 
-
-        /// ADD COLLISION CHECKS HERE
-        object.physicsBody!.setLinearVelocity(new Vector3(0, object.physicsBody!.getLinearVelocity().y, 0));
-
+        const depth = Math.max(0, targetY - objectPosition.y);
         physicsBody.applyForce(
-          new Vector3(0, wave1 + wave2 + wave3 + 0.5 - Math.abs(this.oceanPositionY), 0),
-          objectPosition.add(normal.scale(0.5))
+          physics.gravity.scale(depth * physicsBody.getMassProperties().mass!).negate(),
+          objectPosition
         );
+
+        physicsBody.setLinearDamping(0.15);
+        physicsBody.setAngularVelocity(new Vector3(normal.x, 0, normal.z).scale(depth));
+        physicsBody.setLinearVelocity(new Vector3(0, physicsBody.getLinearVelocity().y, 0));
       }
     });
 
