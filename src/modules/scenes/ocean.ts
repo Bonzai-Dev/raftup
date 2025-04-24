@@ -6,6 +6,9 @@ import {
   StandardMaterial,
   Color3,
   MeshBuilder,
+  CreateSoundAsync,
+  AbstractMesh,
+  Axis,
 } from "@babylonjs/core";
 import "@babylonjs/inspector";
 import { Control, Image } from "@babylonjs/gui";
@@ -17,6 +20,7 @@ import Mesh from "@/modules/nodes/gameObjects/meshes/mesh";
 import Player from "@/modules/nodes/gameObjects/player";
 import GameObject from "../nodes/gameObjects/object";
 import { toRad } from "@mathigon/euclid";
+import Radio from "../nodes/gameObjects/meshes/radio";
 
 export default class Test extends Scene {
   constructor(parameters: SceneParameters) {
@@ -67,6 +71,8 @@ export default class Test extends Scene {
       tags: [tags.floating, tags.pickable],
     });
 
+    new Radio(new Vector3(0, -10, 8));
+  
     new Player(new Vector3(0, 2, 0));
   }
 }

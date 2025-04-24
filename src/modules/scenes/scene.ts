@@ -20,12 +20,16 @@ import {
   StandardMaterial,
   Texture,
   Mesh,
+  CreateSoundAsync,
+  AudioEngineV2,
+  CreateAudioEngineAsync,
 } from "@babylonjs/core";
 import { registerBuiltInLoaders } from "@babylonjs/loaders/dynamic";
 import HavokPhysics from "@babylonjs/havok";
 import "@babylonjs/inspector";
 import { physics, inputsMap } from "@/config";
 import Inputs from "@/modules/inputs";
+import Game from "../game";
 
 export interface SceneParameters {
   engine: Engine;
@@ -37,6 +41,7 @@ export default class Scene extends BabylonScene {
   protected readonly camera: UniversalCamera;
   protected readonly debugMode: boolean;
   protected readonly skybox: Mesh;
+  private readonly audioEngine: AudioEngineV2 | undefined;
   private freeCameraEnabled = false;
 
   constructor(parameters: SceneParameters) {
@@ -64,6 +69,25 @@ export default class Scene extends BabylonScene {
     this.camera.inputs.addKeyboard();
     this.camera.inputs.addMouse();
     this.disableFreeCam();
+
+    (async () => {
+      this.audioEngine = await CreateAudioEngineAsync({
+        volume: 0.5,
+      });
+
+      // Create sounds here, but don't call `play()` on them, yet ...
+      const music = await CreateSoundAsync("music", "/src/assets/sounds/funky.wav", {
+        spatialEnabled: true,
+        loop: true,
+      });
+
+      music.spatial.attach(this.getNodeByName("radio"));
+
+      // Wait until audio engine is ready to play sounds.
+      await this.audioEngine.unlockAsync();
+
+      music.play({ loop: true });
+    })();
 
     this.onKeyboardObservable.add(() => {
       if (!this.debugMode) return;
@@ -110,7 +134,7 @@ export default class Scene extends BabylonScene {
       gizmosManager.positionGizmoEnabled = true;
       gizmosManager.rotationGizmoEnabled = true;
     }
-    
+
     for (let lightIndex = 0; lightIndex < this.lights.length; lightIndex++) {
       const light = this.lights[lightIndex];
       if (this.debugMode) {
@@ -186,11 +210,17 @@ export default class Scene extends BabylonScene {
 
   protected async scene() {}
 
+  public async loadAudio() {}
+
   public getCamera(): UniversalCamera {
     return this.camera;
   }
 
   public getFreeCameraEnabled(): boolean {
     return this.freeCameraEnabled;
+  }
+
+  public getAudioEngine(): AudioEngineV2 {
+    return this.audioEngine as AudioEngineV2;
   }
 }

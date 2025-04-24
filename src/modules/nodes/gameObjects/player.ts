@@ -39,11 +39,11 @@ export default class Player extends GameObject {
     const game = Game.getInstance();
     const scene = game.getScene();
 
-    const playerMaterial = new StandardMaterial("Player", scene);
+    const playerMaterial = new StandardMaterial("player", scene);
     playerMaterial.diffuseColor = new Color3(1, 0.584, 0);
 
     const parameters: GameObjectParameters = {
-      mesh: MeshBuilder.CreateCapsule("Player", { height: 3.4, radius: 0.5 }, scene),
+      mesh: MeshBuilder.CreateCapsule("player", { height: 3.4, radius: 0.5 }, scene),
       collider: PhysicsShapeType.CAPSULE,
       physicsMaterial: { mass: 1, restitution: 0, friction: 0.1 },
       material: playerMaterial,
@@ -84,6 +84,10 @@ export default class Player extends GameObject {
 
       this.mesh.rotation = new Vector3(0, Math.atan2(-cameraLookDirection.x, -cameraLookDirection.z), 0);
       this.collider.body.setAngularVelocity(Vector3.Zero());
+
+      const listener = scene.getAudioEngine().listener;
+      listener.position = this.camera.position;
+      listener.rotation = new Vector3(Math.sin(this.camera.rotation.y), 0, Math.cos(this.camera.rotation.y));
     });
   }
 
@@ -143,7 +147,6 @@ export default class Player extends GameObject {
 
     // Movement
     if (this.moveVector.length() === 0 && this.onGround()) {
-
     } else if (this.moveVector.length() > 0) {
       // Apply movement force
       this.collider.body.applyForce(
