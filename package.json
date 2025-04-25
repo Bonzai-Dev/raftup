@@ -23,6 +23,7 @@
     "@babylonjs/inspector": "^8.0.2",
     "@babylonjs/materials": "^8.4.0",
     "@mathigon/euclid": "^1.2.4",
-    "dat.gui": "^0.7.9"
+    "dat.gui": "^0.7.9",
+    "vite-plugin-vercel": "^9.0.5"
   }
 }
