@@ -2,7 +2,6 @@ precision highp float;
 
 uniform mat4 worldViewProjection;
 uniform float time;
-uniform float windSpeed;
 uniform vec2 wave1Values;
 uniform vec2 wave2Values;
 uniform vec2 wave3Values;
@@ -11,7 +10,7 @@ attribute vec3 position;
 varying vec3 waveNormal;
 
 float wave(float frequency, float height, float previousWaveX) {
-	return exp2(sin(previousWaveX * position.x * frequency + time * windSpeed) * height + cos(position.z * frequency + time * windSpeed) * height) * 0.5;
+	return exp2(sin(previousWaveX * position.x * frequency + time) * height + cos(position.z * frequency + time) * height) * 0.5;
 }
 
 float partialDerivativeX(float frequency, float h) {

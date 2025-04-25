@@ -5,31 +5,22 @@ import {
   Engine,
   UniversalCamera,
   FreeCameraKeyboardMoveInput,
-  ShadowGenerator,
-  PointLight,
-  DirectionalLight,
-  SpotLight,
   LightGizmo,
-  CascadedShadowGenerator,
   UtilityLayerRenderer,
   PositionGizmo,
   RotationGizmo,
   GizmoManager,
-  CubeTexture,
   MeshBuilder,
-  StandardMaterial,
-  Texture,
   Mesh,
-  CreateSoundAsync,
   AudioEngineV2,
-  CreateAudioEngineAsync,
+  ReflectionProbe,
 } from "@babylonjs/core";
+import { SkyMaterial } from "@babylonjs/materials";
 import { registerBuiltInLoaders } from "@babylonjs/loaders/dynamic";
 import HavokPhysics from "@babylonjs/havok";
 import "@babylonjs/inspector";
 import { physics, inputsMap } from "@/config";
 import Inputs from "@/modules/inputs";
-import Game from "../game";
 
 export interface SceneParameters {
   engine: Engine;
@@ -41,20 +32,26 @@ export default class Scene extends BabylonScene {
   protected readonly camera: UniversalCamera;
   protected readonly debugMode: boolean;
   protected readonly skybox: Mesh;
-  private readonly audioEngine: AudioEngineV2 | undefined;
+  protected readonly reflectionProbe: ReflectionProbe;
+  protected audioEngine: AudioEngineV2 | undefined;
   private freeCameraEnabled = false;
 
   constructor(parameters: SceneParameters) {
     super(parameters.engine);
     registerBuiltInLoaders();
-    this.skybox = MeshBuilder.CreateBox("skybox", { size: 5000 }, this);
-    const skyboxMaterial = new StandardMaterial("skyBoxMaterial", this);
-    skyboxMaterial.backFaceCulling = false;
-    skyboxMaterial.reflectionTexture = new CubeTexture("/src/assets/textures/clouds.env", this);
-    skyboxMaterial.reflectionTexture.coordinatesMode = Texture.SKYBOX_MODE;
-    skyboxMaterial.disableLighting = true;
-    this.skybox.material = skyboxMaterial;
-    this.environmentTexture = skyboxMaterial.reflectionTexture;
+
+    const skyMaterial = new SkyMaterial("skyMaterial", this);
+    skyMaterial.backFaceCulling = false;
+    skyMaterial.inclination = -0.2; // Adjust for the time of day (e.g., 0 for noon, -0.5 for sunset)
+    skyMaterial.luminance = 1.1; // Brightness of the sky
+    skyMaterial.turbidity = 5; // Adjust for atmospheric scattering
+
+    skyMaterial.backFaceCulling = false;
+
+    this.skybox = MeshBuilder.CreateBox("skyBox", { size: 5000 }, this);
+    this.skybox.material = skyMaterial;
+    this.reflectionProbe = new ReflectionProbe("probe", 512, this);
+    this.environmentTexture = this.reflectionProbe.cubeTexture;
 
     const inputs = Inputs.getInstance();
     this.debugMode = parameters.debugMode || false;
@@ -69,25 +66,6 @@ export default class Scene extends BabylonScene {
     this.camera.inputs.addKeyboard();
     this.camera.inputs.addMouse();
     this.disableFreeCam();
-
-    (async () => {
-      this.audioEngine = await CreateAudioEngineAsync({
-        volume: 0.5,
-      });
-
-      // Create sounds here, but don't call `play()` on them, yet ...
-      const music = await CreateSoundAsync("music", "/src/assets/sounds/funky.wav", {
-        spatialEnabled: true,
-        loop: true,
-      });
-
-      music.spatial.attach(this.getNodeByName("radio"));
-
-      // Wait until audio engine is ready to play sounds.
-      await this.audioEngine.unlockAsync();
-
-      music.play({ loop: true });
-    })();
 
     this.onKeyboardObservable.add(() => {
       if (!this.debugMode) return;
@@ -127,7 +105,10 @@ export default class Scene extends BabylonScene {
   private async loadScene() {
     await this.loadPhysics();
     await this.scene();
+    await this.loadAudio();
     await this.whenReadyAsync();
+
+    this.reflectionProbe.renderList! = this.meshes;
 
     if (this.debugMode) {
       const gizmosManager = new GizmoManager(this);
@@ -149,44 +130,7 @@ export default class Scene extends BabylonScene {
         const rotationGizmo = new RotationGizmo(utilityLayer);
         rotationGizmo.attachedNode = light;
       }
-
-      if (light instanceof DirectionalLight) {
-        const shadowGenerator = new CascadedShadowGenerator(1024, light);
-        shadowGenerator.lambda = 1;
-        shadowGenerator.depthClamp = true;
-        shadowGenerator.autoCalcDepthBounds = true;
-
-        shadowGenerator.bias = 0.005;
-        this.applyShadowSettings(shadowGenerator);
-      } else if (light instanceof PointLight) {
-        const shadowGenerator = new ShadowGenerator(1024 * 2, light);
-
-        shadowGenerator.bias = 0.0001;
-        shadowGenerator.normalBias = 0.01;
-
-        shadowGenerator.contactHardeningLightSizeUVRatio = 0.1;
-        shadowGenerator.useContactHardeningShadow = true;
-        this.applyShadowSettings(shadowGenerator);
-      } else if (light instanceof SpotLight) {
-        const shadowGenerator = new ShadowGenerator(1024 * 2, light);
-
-        shadowGenerator.bias = 0.0001;
-        shadowGenerator.normalBias = 0.01;
-
-        shadowGenerator.contactHardeningLightSizeUVRatio = 0.1;
-        shadowGenerator.useContactHardeningShadow = true;
-        this.applyShadowSettings(shadowGenerator);
-      }
     }
-  }
-
-  private applyShadowSettings(shadowGenerator: ShadowGenerator | CascadedShadowGenerator) {
-    shadowGenerator.usePercentageCloserFiltering = true;
-    shadowGenerator.transparencyShadow = true;
-    shadowGenerator.enableSoftTransparentShadow = true;
-    shadowGenerator.filteringQuality = ShadowGenerator.QUALITY_HIGH;
-    shadowGenerator.setDarkness(0.5);
-    shadowGenerator.getShadowMap()!.renderList = this.meshes.filter((mesh) => mesh !== this.skybox);
   }
 
   private async loadPhysics() {
@@ -210,7 +154,7 @@ export default class Scene extends BabylonScene {
 
   protected async scene() {}
 
-  public async loadAudio() {}
+  protected async loadAudio() {}
 
   public getCamera(): UniversalCamera {
     return this.camera;

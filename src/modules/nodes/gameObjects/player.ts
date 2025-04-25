@@ -8,27 +8,27 @@ import {
   Ray,
   Mesh,
   AbstractMesh,
-  PhysicsMotionType,
   Quaternion,
-  RayHelper,
+  ProximityCastResult,
+  HavokPlugin,
 } from "@babylonjs/core";
+import { inputsMap, tags } from "@/config";
+import { toRad } from "@mathigon/euclid";
 import GameObject, { GameObjectParameters } from "./object";
 import Game from "@/modules/game";
-import { inputsMap, physics, tags } from "@/config";
 import Inputs from "@/modules/inputs";
-import { toRad } from "@mathigon/euclid";
 
 export default class Player extends GameObject {
   private readonly camera: UniversalCamera;
   private readonly cameraClampDegrees = 5;
 
   private readonly playerHeight: number;
-  private readonly groundCheckDistance = 0.6;
+  private readonly groundCheckDistance = 0.2;
   private readonly grabRange = 5;
   private readonly pickUpDistance = 2.5;
 
   private readonly speed: number = 5;
-  private readonly jumpForce = 20000;
+  private readonly jumpForce = 30000;
   private readonly counterForce = 17000;
   private readonly acceleration = 30000;
 
@@ -64,7 +64,7 @@ export default class Player extends GameObject {
     const boundingInfo = this.mesh.getBoundingInfo();
     this.playerHeight = boundingInfo.boundingBox.maximumWorld.y - boundingInfo.boundingBox.minimumWorld.y;
 
-    scene.registerBeforeRender(() => {
+    scene.onBeforeRenderObservable.add(() => {
       const cameraRotation = this.camera.rotation;
       cameraRotation.x = Math.max(
         toRad(-90 + this.cameraClampDegrees),
@@ -84,10 +84,6 @@ export default class Player extends GameObject {
 
       this.mesh.rotation = new Vector3(0, Math.atan2(-cameraLookDirection.x, -cameraLookDirection.z), 0);
       this.collider.body.setAngularVelocity(Vector3.Zero());
-
-      const listener = scene.getAudioEngine().listener;
-      listener.position = this.camera.position;
-      listener.rotation = new Vector3(Math.sin(this.camera.rotation.y), 0, Math.cos(this.camera.rotation.y));
     });
   }
 
@@ -125,14 +121,10 @@ export default class Player extends GameObject {
           this.camera.position.add(this.camera.getDirection(Vector3.Forward()).scale(this.pickUpDistance)),
           (10 * Game.getInstance().getScene().deltaTime) / 1000
         ),
-        Quaternion.Zero()
+        Quaternion.FromEulerAngles(0, this.camera.rotation.y + toRad(90), 0)
       );
 
-      if (
-        inputs.keyTapped(inputsMap.drop) //||
-        // Vector3.Distance(this.pickedUpObject.position, this.camera.position) > this.pickUpDistance + 2
-      )
-        this.dropObject();
+      if (inputs.keyTapped(inputsMap.drop)) this.dropObject();
     }
   }
 
@@ -189,11 +181,20 @@ export default class Player extends GameObject {
   }
 
   private onGround(): boolean {
-    const physicsEngine = Game.getInstance().getScene().getPhysicsEngine()!;
-    const rayEnd = this.mesh.position.subtract(new Vector3(0, this.playerHeight + this.groundCheckDistance, 0));
-    return (
-      physicsEngine.raycast(this.mesh.position, rayEnd, { collideWith: 1 }).hasHit &&
-      Math.abs(this.collider.body.getLinearVelocity().y) <= 1
+    const havokPlugin = Game.getInstance().getScene().getPhysicsEngine()?.getPhysicsPlugin() as HavokPlugin;
+    const position = this.mesh.position.subtract(new Vector3(0, this.playerHeight + this.groundCheckDistance, 0));
+    const result = new ProximityCastResult();
+    havokPlugin.pointProximity(
+      {
+        position: position,
+        maxDistance: 1.5,
+        collisionFilter: {
+          collideWith: 1,
+        },
+        shouldHitTriggers: true,
+      },
+      result
     );
+    return result.hasHit && this.collider.body.getLinearVelocity().y <= 0;
   }
 }

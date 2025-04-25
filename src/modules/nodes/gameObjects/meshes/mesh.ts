@@ -24,7 +24,7 @@ export default class Mesh {
 
   private async loadMesh(src: string, name: string, parameters: GameObjectParameters) {
     const scene = Game.getInstance().getScene();
-    const model = await importGlb(src, name);
+    const model = await importGlb(src);
 
     const root = model.meshes[0];
     const { min, max } = root.getHierarchyBoundingVectors();
