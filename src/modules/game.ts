@@ -1,10 +1,13 @@
 import { Engine } from "@babylonjs/core";
+import { AdvancedDynamicTexture } from "@babylonjs/gui";
 import Test from "@/modules/scenes/test";
+import Ocean from "@/modules/scenes/ocean";
 import GameScene from "./scenes/scene";
 
 export default class Game {
   private static instance: Game;
   private scene: GameScene;
+  private readonly gui: AdvancedDynamicTexture;
   private readonly engine: Engine;
   private readonly canvas: HTMLCanvasElement;
 
@@ -13,18 +16,14 @@ export default class Game {
     document.body.appendChild(this.canvas);
 
     this.engine = new Engine(this.canvas, true);
-    this.scene = new Test({ engine: this.engine, canvas: this.canvas, debugMode: true });
+    this.scene = new Ocean({ engine: this.engine, canvas: this.canvas });
+    this.gui = AdvancedDynamicTexture.CreateFullscreenUI("UI");
     this.loadGame();
   }
 
   private async loadGame() {
     window.addEventListener("resize", () => {
       this.engine.resize();
-    });
-
-    this.canvas.addEventListener("click", () => {
-      this.canvas.requestPointerLock();
-      this.canvas.focus();
     });
 
     this.engine.runRenderLoop(() => {
@@ -43,6 +42,10 @@ export default class Game {
 
   public getEngine(): Engine {
     return this.engine;
+  }
+
+  public getGui(): AdvancedDynamicTexture {
+    return this.gui;
   }
 
   public getCanvas(): HTMLCanvasElement {

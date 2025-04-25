@@ -1,9 +1,14 @@
-import PhysicsSettings from "@/types/PhysicsSettings";
 import { Vector3 } from "@babylonjs/core";
+import PhysicsSettings from "@/types/PhysicsSettings";
 
 export const physics: PhysicsSettings = {
-  gravity: new Vector3(0, -9.81, 0),
+  gravity: new Vector3(0, -19.62, 0),
 };
+
+export const tags = {
+  pickable: "pickable",
+  floating: "floatingObject"
+}
 
 interface InputsMap {
   inspector: string[];
@@ -13,6 +18,8 @@ interface InputsMap {
   moveLeft: string[];
   moveRight: string[];
   jump: string[];
+  pickUp: string[];
+  drop: string[];
 }
 
 // Map inputs using the javascript key codes
@@ -25,4 +32,6 @@ export const inputsMap: InputsMap = {
   moveLeft: ["A"],
   moveRight: ["D"],
   jump: [" "],
+  pickUp: ["E"],
+  drop: ["Q"],
 }

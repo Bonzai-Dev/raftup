@@ -5,19 +5,21 @@ import {
   Engine,
   UniversalCamera,
   FreeCameraKeyboardMoveInput,
-  ShadowGenerator,
-  PointLight,
-  DirectionalLight,
-  SpotLight,
   LightGizmo,
-  CascadedShadowGenerator,
-  DepthRenderer,
-  Constants,
+  UtilityLayerRenderer,
+  PositionGizmo,
+  RotationGizmo,
+  GizmoManager,
+  MeshBuilder,
+  Mesh,
+  AudioEngineV2,
+  ReflectionProbe,
 } from "@babylonjs/core";
+import { SkyMaterial } from "@babylonjs/materials";
+import { registerBuiltInLoaders } from "@babylonjs/loaders/dynamic";
 import HavokPhysics from "@babylonjs/havok";
 import "@babylonjs/inspector";
-import { physics } from "@/config";
-import { inputsMap } from "@/config";
+import { physics, inputsMap } from "@/config";
 import Inputs from "@/modules/inputs";
 
 export interface SceneParameters {
@@ -29,16 +31,34 @@ export interface SceneParameters {
 export default class Scene extends BabylonScene {
   protected readonly camera: UniversalCamera;
   protected readonly debugMode: boolean;
+  protected readonly skybox: Mesh;
+  protected readonly reflectionProbe: ReflectionProbe;
+  protected audioEngine: AudioEngineV2 | undefined;
   private freeCameraEnabled = false;
 
   constructor(parameters: SceneParameters) {
     super(parameters.engine);
+    registerBuiltInLoaders();
+
+    const skyMaterial = new SkyMaterial("skyMaterial", this);
+    skyMaterial.backFaceCulling = false;
+    skyMaterial.inclination = -0.2; // Adjust for the time of day (e.g., 0 for noon, -0.5 for sunset)
+    skyMaterial.luminance = 1.1; // Brightness of the sky
+    skyMaterial.turbidity = 5; // Adjust for atmospheric scattering
+
+    skyMaterial.backFaceCulling = false;
+
+    this.skybox = MeshBuilder.CreateBox("skyBox", { size: 5000 }, this);
+    this.skybox.material = skyMaterial;
+    this.reflectionProbe = new ReflectionProbe("probe", 512, this);
+    this.environmentTexture = this.reflectionProbe.cubeTexture;
+
     const inputs = Inputs.getInstance();
     this.debugMode = parameters.debugMode || false;
 
     this.camera = new UniversalCamera("Camera", Vector3.Zero(), this);
     this.camera.minZ = 0.01;
-    this.camera.maxZ = 1000;
+    this.camera.maxZ = 5000;
     this.camera.fov = 1.5;
     this.camera.angularSensibility = 500;
     this.camera.inertia = 0;
@@ -46,16 +66,19 @@ export default class Scene extends BabylonScene {
     this.camera.inputs.addKeyboard();
     this.camera.inputs.addMouse();
     this.disableFreeCam();
-    
-    this.enableDepthRenderer();
-    this.disableDepthRenderer();
 
     this.onKeyboardObservable.add(() => {
       if (!this.debugMode) return;
 
       if (inputs.keysDown(inputsMap.inspector)) {
-        if (this.debugLayer.isVisible()) this.debugLayer.hide();
-        else this.debugLayer.show({embedMode: true});
+        if (this.debugLayer.isVisible()) {
+          this.debugLayer.hide();
+        } else {
+          this.debugLayer.show({
+            embedMode: true,
+            overlay: false,
+          });
+        }
       }
 
       if (inputs.keysDown(inputsMap.freeCamera)) {
@@ -69,88 +92,50 @@ export default class Scene extends BabylonScene {
       }
     });
 
+    parameters.canvas.addEventListener("click", () => {
+      if (!this.freeCameraEnabled) {
+        parameters.canvas.requestPointerLock();
+        parameters.canvas.focus();
+      }
+    });
+
     this.loadScene();
   }
 
   private async loadScene() {
     await this.loadPhysics();
-    this.scene();
+    await this.scene();
+    await this.loadAudio();
+    await this.whenReadyAsync();
 
-    // if (this.debugMode) {
-    //   const utilityLayer = new UtilityLayerRenderer(this);
-    //   const positionGizmo = new PositionGizmo(utilityLayer);
-    //   const rotationGizmo = new RotationGizmo(utilityLayer);
-    //   const scaleGizmo = new ScaleGizmo(utilityLayer);
+    this.reflectionProbe.renderList! = this.meshes;
 
-    //   for (let i = 0; i < this.meshes.length; i++) {
-    //     const mesh = this.meshes[i];
-    //     positionGizmo.attachedMesh = mesh;
-    //     rotationGizmo.attachedMesh = mesh;
-    //     scaleGizmo.attachedMesh = mesh;
-    //   }
-    // }
+    if (this.debugMode) {
+      const gizmosManager = new GizmoManager(this);
+      gizmosManager.positionGizmoEnabled = true;
+      gizmosManager.rotationGizmoEnabled = true;
+    }
 
-    for (let i = 0; i < this.lights.length; i++) {
-      const light = this.lights[i];
-
+    for (let lightIndex = 0; lightIndex < this.lights.length; lightIndex++) {
+      const light = this.lights[lightIndex];
       if (this.debugMode) {
         const gizmo = new LightGizmo();
         gizmo.light = light;
         gizmo.scaleRatio = 5;
-      }
 
-      if (light instanceof DirectionalLight) {
-        const depthRenderer = new DepthRenderer(this, Constants.TEXTURETYPE_FLOAT, this.camera, false, Constants.TEXTURE_NEAREST_SAMPLINGMODE);
-        const depthRendererId = "minmax" + this.camera.id;
-        this._depthRenderer[depthRendererId] = depthRenderer;
+        const utilityLayer = new UtilityLayerRenderer(this);
 
-        const shadowGenerator = new CascadedShadowGenerator(1024 * 2, light) as any; 
-        shadowGenerator.setDepthRenderer(depthRenderer);
-
-        shadowGenerator.lambda = 1;
-        shadowGenerator.depthClamp = true;
-        shadowGenerator.stabilizeCascades = true;
-        shadowGenerator.autoCalcDepthBounds = true;
-        shadowGenerator._depthReducer._sourceTexture = null;
-        shadowGenerator._depthReducer.setSourceTexture(depthRenderer.getDepthMap(), true, Constants.TEXTURETYPE_FLOAT, true);
-
-        shadowGenerator.bias = 0.0022;
-        shadowGenerator.normalBias = 0.01;
-
-        shadowGenerator.contactHardeningLightSizeUVRatio = 0.1;
-        shadowGenerator.usePercentageCloserFiltering = true;
-        shadowGenerator.useContactHardeningShadow = true;
-        
-        shadowGenerator.transparencyShadow = true;
-        shadowGenerator.enableSoftTransparentShadow = true;
-        shadowGenerator.filteringQuality = ShadowGenerator.QUALITY_HIGH;
-
-        shadowGenerator.setDarkness(0.5);
-        shadowGenerator.getShadowMap()!.renderList = this.meshes;
-      } else if (light instanceof PointLight) {
-      } else if (light instanceof SpotLight) {
-        const shadowGenerator = new ShadowGenerator(1024 * 2, light);
-
-        shadowGenerator.bias = 0.0001;
-        shadowGenerator.normalBias = 0.01;
-        
-        shadowGenerator.contactHardeningLightSizeUVRatio = 0.1;
-        shadowGenerator.usePercentageCloserFiltering = true;
-        shadowGenerator.useContactHardeningShadow = true;
-
-        shadowGenerator.transparencyShadow = true;
-        shadowGenerator.enableSoftTransparentShadow = true;
-        shadowGenerator.filteringQuality = ShadowGenerator.QUALITY_HIGH;
-
-        shadowGenerator.setDarkness(0.5);
-        shadowGenerator.getShadowMap()!.renderList = this.meshes;
+        const positionGizmo = new PositionGizmo(utilityLayer);
+        positionGizmo.attachedNode = light;
+        const rotationGizmo = new RotationGizmo(utilityLayer);
+        rotationGizmo.attachedNode = light;
       }
     }
   }
 
   private async loadPhysics() {
     const havokInstance = await HavokPhysics();
-    const havokPlugin = new HavokPlugin(true, havokInstance);
+    const havokPlugin = new HavokPlugin(false, havokInstance);
     this.enablePhysics(physics.gravity, havokPlugin);
   }
 
@@ -167,7 +152,9 @@ export default class Scene extends BabylonScene {
     this.getCamera().inputs.removeByType("FreeCameraKeyboardMoveInput");
   }
 
-  protected scene() {}
+  protected async scene() {}
+
+  protected async loadAudio() {}
 
   public getCamera(): UniversalCamera {
     return this.camera;
@@ -175,5 +162,9 @@ export default class Scene extends BabylonScene {
 
   public getFreeCameraEnabled(): boolean {
     return this.freeCameraEnabled;
+  }
+
+  public getAudioEngine(): AudioEngineV2 {
+    return this.audioEngine as AudioEngineV2;
   }
 }
