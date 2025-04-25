@@ -39,6 +39,7 @@ export default class Scene extends BabylonScene {
   protected audioEngine: AudioEngineV2 | undefined;
   private freeCameraEnabled = false;
   protected startTime = 0;
+  private daysSurvived = 0; 
 
   constructor(parameters: SceneParameters) {
     super(parameters.engine);
@@ -46,7 +47,7 @@ export default class Scene extends BabylonScene {
 
     this.skyMaterial = new SkyMaterial("skyMaterial", this);
     this.skyMaterial.backFaceCulling = false;
-    this.skyMaterial.luminance = 1.1; // Brightness of the sky
+    this.skyMaterial.luminance = 1.1;
     this.skyMaterial.turbidity = 5;
 
     this.skyMaterial.backFaceCulling = false;
@@ -76,6 +77,8 @@ export default class Scene extends BabylonScene {
       const normalizedTime = (this.startTime % dayNightCycle.dayDuration) / dayNightCycle.dayDuration;
       this.skyMaterial.inclination = Math.sin(normalizedTime * 2 * Math.PI) * 0.55;
       this.skyMaterial.azimuth = Math.cos(normalizedTime * 2 * Math.PI) * 0.55;
+
+      // time varaible seperate and reset it each time and yes
 
       for (let lightIndex = 0; lightIndex < this.lights.length; lightIndex++) {
         const light = this.lights[lightIndex];

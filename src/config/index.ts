@@ -7,7 +7,7 @@ export const physics: PhysicsSettings = {
 };
 
 export const dayNightCycle: DayNightCycleSettings = {
-  dayDuration: 120,
+  dayDuration: 1200,
 };
 
 export const tags = {
