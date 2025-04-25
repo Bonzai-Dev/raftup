@@ -1,6 +1,5 @@
 import { Engine } from "@babylonjs/core";
 import { AdvancedDynamicTexture } from "@babylonjs/gui";
-import Test from "@/modules/scenes/test";
 import Ocean from "@/modules/scenes/ocean";
 import GameScene from "./scenes/scene";
 
