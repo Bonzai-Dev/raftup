@@ -14,13 +14,16 @@ import {
   Mesh,
   AudioEngineV2,
   ReflectionProbe,
+  DirectionalLight,
+  HemisphericLight,
 } from "@babylonjs/core";
 import { SkyMaterial } from "@babylonjs/materials";
 import { registerBuiltInLoaders } from "@babylonjs/loaders/dynamic";
 import HavokPhysics from "@babylonjs/havok";
 import "@babylonjs/inspector";
-import { physics, inputsMap } from "@/config";
+import { physics, inputsMap, dayNightCycle } from "@/config";
 import Inputs from "@/modules/inputs";
+import { toRad } from "@mathigon/euclid";
 
 export interface SceneParameters {
   engine: Engine;
@@ -32,26 +35,24 @@ export default class Scene extends BabylonScene {
   protected readonly camera: UniversalCamera;
   protected readonly debugMode: boolean;
   protected readonly skybox: Mesh;
-  protected readonly reflectionProbe: ReflectionProbe;
+  protected readonly skyMaterial: SkyMaterial;
   protected audioEngine: AudioEngineV2 | undefined;
   private freeCameraEnabled = false;
+  protected startTime = 0;
 
   constructor(parameters: SceneParameters) {
     super(parameters.engine);
     registerBuiltInLoaders();
 
-    const skyMaterial = new SkyMaterial("skyMaterial", this);
-    skyMaterial.backFaceCulling = false;
-    skyMaterial.inclination = -0.2; // Adjust for the time of day (e.g., 0 for noon, -0.5 for sunset)
-    skyMaterial.luminance = 1.1; // Brightness of the sky
-    skyMaterial.turbidity = 5; // Adjust for atmospheric scattering
+    this.skyMaterial = new SkyMaterial("skyMaterial", this);
+    this.skyMaterial.backFaceCulling = false;
+    this.skyMaterial.luminance = 1.1; // Brightness of the sky
+    this.skyMaterial.turbidity = 5;
 
-    skyMaterial.backFaceCulling = false;
+    this.skyMaterial.backFaceCulling = false;
 
     this.skybox = MeshBuilder.CreateBox("skyBox", { size: 5000 }, this);
-    this.skybox.material = skyMaterial;
-    this.reflectionProbe = new ReflectionProbe("probe", 512, this);
-    this.environmentTexture = this.reflectionProbe.cubeTexture;
+    this.skybox.material = this.skyMaterial;
 
     const inputs = Inputs.getInstance();
     this.debugMode = parameters.debugMode || false;
@@ -66,6 +67,26 @@ export default class Scene extends BabylonScene {
     this.camera.inputs.addKeyboard();
     this.camera.inputs.addMouse();
     this.disableFreeCam();
+
+    this.onBeforeRenderObservable.add(() => {
+      this.startTime += this.getEngine().getDeltaTime() / 1000;
+
+      const sunDirection = this.skyMaterial.sunPosition;
+
+      const normalizedTime = (this.startTime % dayNightCycle.dayDuration) / dayNightCycle.dayDuration;
+      this.skyMaterial.inclination = Math.sin(normalizedTime * 2 * Math.PI) * 0.55;
+      this.skyMaterial.azimuth = Math.cos(normalizedTime * 2 * Math.PI) * 0.55;
+
+      for (let lightIndex = 0; lightIndex < this.lights.length; lightIndex++) {
+        const light = this.lights[lightIndex];
+        if (light instanceof DirectionalLight) {
+          light.direction = sunDirection.normalize().negate();
+          light.intensity = Math.abs(Math.cos(normalizedTime * 2 * Math.PI) * 0.3);
+        } else if (light instanceof HemisphericLight) {
+          light.intensity = Math.abs(Math.cos(normalizedTime * 2 * Math.PI) * 0.5);
+        }
+      }
+    });
 
     this.onKeyboardObservable.add(() => {
       if (!this.debugMode) return;
@@ -107,8 +128,6 @@ export default class Scene extends BabylonScene {
     await this.scene();
     await this.loadAudio();
     await this.whenReadyAsync();
-
-    this.reflectionProbe.renderList! = this.meshes;
 
     if (this.debugMode) {
       const gizmosManager = new GizmoManager(this);
@@ -166,5 +185,9 @@ export default class Scene extends BabylonScene {
 
   public getAudioEngine(): AudioEngineV2 {
     return this.audioEngine as AudioEngineV2;
+  }
+
+  public getStartTime(): number {
+    return this.startTime;
   }
 }

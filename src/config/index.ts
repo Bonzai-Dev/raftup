@@ -1,8 +1,13 @@
 import { Vector3 } from "@babylonjs/core";
+import DayNightCycleSettings from "@/types/DayNightCycle";
 import PhysicsSettings from "@/types/PhysicsSettings";
 
 export const physics: PhysicsSettings = {
   gravity: new Vector3(0, -19.62, 0),
+};
+
+export const dayNightCycle: DayNightCycleSettings = {
+  dayDuration: 120,
 };
 
 export const tags = {

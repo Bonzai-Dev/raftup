@@ -30,7 +30,7 @@ export default class Test extends Scene {
     transparentMaterial.alpha = 0.5;
 
     const gui = Game.getInstance().getGui();
-    const image = new Image("cursor", "/src/assets/cursor.svg");
+    const image = new Image("cursor", "/assets/cursor.svg");
     image.width = "5px";
     image.height = "5px";
     image.horizontalAlignment = Control.HORIZONTAL_ALIGNMENT_CENTER;
@@ -46,7 +46,7 @@ export default class Test extends Scene {
 
     new Ocean();
 
-    new Mesh("/src/assets/models/raft.glb", "raft", {
+    new Mesh("/assets/models/raft.glb", "raft", {
       collider: PhysicsShapeType.BOX,
       position: new Vector3(0, -10, 0),
       physicsMaterial: { mass: 5000, restitution: 0, friction: 1 },
@@ -55,7 +55,7 @@ export default class Test extends Scene {
 
     new Radio(new Vector3(-2, -10, -0.5), new Vector3(0, toRad(15), 0));
 
-    new Mesh("/src/assets/models/plasticChair.glb", "plasticChair", {
+    new Mesh("/assets/models/plasticChair.glb", "plasticChair", {
       collider: PhysicsShapeType.BOX,
       position: new Vector3(-2, -5, -3),
       rotation: new Vector3(0, toRad(-45), 0),
@@ -63,21 +63,21 @@ export default class Test extends Scene {
       tags: [tags.floating, tags.pickable],
     });
 
-    new Mesh("/src/assets/models/trash/constructionBarrel.glb", "constructionBarrel", {
+    new Mesh("/assets/models/trash/constructionBarrel.glb", "constructionBarrel", {
       collider: PhysicsShapeType.CYLINDER,
       position: new Vector3(5, -10, 5),
       physicsMaterial: { mass: 50, restitution: 0, friction: 1 },
       tags: [tags.floating, tags.pickable],
     });
 
-    new Mesh("/src/assets/models/trash/plasticBarrel.glb", "plasticBarrel", {
+    new Mesh("/assets/models/trash/plasticBarrel.glb", "plasticBarrel", {
       collider: PhysicsShapeType.CYLINDER,
       position: new Vector3(-5, -10, 5),
       physicsMaterial: { mass: 50, restitution: 0, friction: 1 },
       tags: [tags.floating, tags.pickable],
     });
 
-    new Mesh("/src/assets/models/trash/briefcase.glb", "briefcase", {
+    new Mesh("/assets/models/trash/briefcase.glb", "briefcase", {
       collider: PhysicsShapeType.BOX,
       position: new Vector3(1, -10, -2.5),
       rotation: new Vector3(0, toRad(-45), 0),
@@ -95,7 +95,7 @@ export default class Test extends Scene {
       listenerEnabled: true,
     });
 
-    const music = await CreateSoundAsync("music", "/src/assets/sounds/funkyRadioMix.wav", {
+    const music = await CreateSoundAsync("music", "/assets/sounds/funkyRadioMix.wav", {
       spatialEnabled: true,
       spatialAutoUpdate: true,
       loop: true,

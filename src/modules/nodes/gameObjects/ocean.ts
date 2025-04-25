@@ -1,15 +1,14 @@
 import { Color3, DirectionalLight, MeshBuilder, ShaderMaterial, Vector2, Vector3 } from "@babylonjs/core";
 import Game from "@/modules/game";
-import oceanVertexShader from "@/assets/shaders/ocean/ocean.vert";
-import oceanFragmentShader from "@/assets/shaders/ocean/ocean.frag";
+import oceanVertexShader from "@/public/assets/shaders/ocean/ocean.vert";
+import oceanFragmentShader from "@/public/assets/shaders/ocean/ocean.frag";
 import { physics, tags } from "@/config";
 
 export default class Ocean {
-  private totalTime = 0;
   // Wave values, X for frequency, Y for height
-  private readonly wave1Values = new Vector2(0.1, 0.1); // 0.6, 0.8
-  private readonly wave2Values = new Vector2(0.1, 0.1); // 0.2, 1
-  private readonly wave3Values = new Vector2(0.1, 0.1); // 0.3, 0.5
+  private readonly wave1Values = new Vector2(0.1, 0.5); // 0.6, 0.8
+  private readonly wave2Values = new Vector2(0.1, 0.5); // 0.2, 1
+  private readonly wave3Values = new Vector2(0.1, 0.5); // 0.3, 0.5
 
   private readonly baseColor = new Color3(0, 0.506, 0.62);
   private readonly ambientColor = new Color3(0.212, 0.314, 0.322);
@@ -73,9 +72,8 @@ export default class Ocean {
     oceanShader.setColor3("baseColor", this.baseColor);
     oceanShader.setColor3("ambientColor", this.ambientColor);
 
-    scene.registerBeforeRender(() => {
-      this.totalTime += scene.getEngine().getDeltaTime() / 1000;
-      oceanShader.setFloat("time", this.totalTime);
+    scene.onBeforeRenderObservable.add(() => {
+      oceanShader.setFloat("time", scene.getStartTime());
       oceanShader.setVector3("lightDirection", directionalLight!.direction!.normalize());
       oceanShader.setVector3("cameraLookDirection", camera.getDirection(Vector3.Forward()));
 
@@ -112,25 +110,28 @@ export default class Ocean {
   }
 
   private wave(frequency: number, height: number, wavePosition: Vector3, previousWaveX: number) {
+    const totalTime = Game.getInstance().getScene().getStartTime();
     return (
       Math.pow(
         2,
-        Math.sin(previousWaveX * wavePosition.x * frequency + this.totalTime * this.windSpeed) * height +
-          Math.cos(wavePosition.z * frequency + this.totalTime * this.windSpeed) * height
+        Math.sin(previousWaveX * wavePosition.x * frequency + totalTime * this.windSpeed) * height +
+          Math.cos(wavePosition.z * frequency + totalTime * this.windSpeed) * height
       ) * 0.5
     );
   }
 
   private partialDerivativeX(frequency: number, h: number, wavePosition: Vector3) {
-    const a = wavePosition.x * frequency + this.totalTime;
-    const b = wavePosition.z * frequency + this.totalTime;
+    const totalTime = Game.getInstance().getScene().getStartTime();
+    const a = wavePosition.x * frequency + totalTime;
+    const b = wavePosition.z * frequency + totalTime;
     const wave = Math.pow(2, h * (Math.sin(a) + Math.cos(b))) * 0.5;
     return wave * Math.log(2.0) * h * frequency * Math.cos(a);
   }
 
   private partialDerivativeZ(frequency: number, h: number, wavePosition: Vector3) {
-    const a = wavePosition.x * frequency + this.totalTime;
-    const b = wavePosition.z * frequency + this.totalTime;
+    const totalTime = Game.getInstance().getScene().getStartTime();
+    const a = wavePosition.x * frequency + totalTime;
+    const b = wavePosition.z * frequency + totalTime;
     const wave = Math.pow(2, h * (Math.sin(a) + Math.cos(b))) * 0.5;
     return wave * Math.log(2.0) * (-h * frequency * Math.sin(b));
   }
