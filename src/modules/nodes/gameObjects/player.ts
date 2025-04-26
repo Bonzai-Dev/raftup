@@ -20,7 +20,6 @@ import Inputs from "@/modules/inputs";
 
 export default class Player extends GameObject {
   private readonly camera: UniversalCamera;
-  private readonly cameraClampDegrees = 5;
 
   private readonly playerHeight: number;
   private readonly groundCheckDistance = 0.2;
@@ -65,12 +64,6 @@ export default class Player extends GameObject {
     this.playerHeight = boundingInfo.boundingBox.maximumWorld.y - boundingInfo.boundingBox.minimumWorld.y;
 
     scene.onBeforeRenderObservable.add(() => {
-      const cameraRotation = this.camera.rotation;
-      cameraRotation.x = Math.max(
-        toRad(-90 + this.cameraClampDegrees),
-        Math.min(toRad(90 - this.cameraClampDegrees), cameraRotation.x)
-      );
-
       if (scene.getFreeCameraEnabled()) return;
       this.handleInputs();
       this.movePlayer();
@@ -81,6 +74,9 @@ export default class Player extends GameObject {
         this.mesh.position.y + glasses.position.y,
         this.mesh.position.z
       );
+
+      if (this.camera.rotation.x >= toRad(90 - 30))
+        this.dropObject();
 
       this.mesh.rotation = new Vector3(0, Math.atan2(-cameraLookDirection.x, -cameraLookDirection.z), 0);
       this.collider.body.setAngularVelocity(Vector3.Zero());
@@ -170,14 +166,13 @@ export default class Player extends GameObject {
   }
 
   private dropObject() {
+    if (!this.pickedUpObject) return;
     this.pickedUpObject!.physicsBody!.setLinearVelocity(Vector3.Zero());
-    // this.pickedUpObject!.physicsBody!.setMotionType(PhysicsMotionType.DYNAMIC);
     this.pickedUpObject = undefined;
   }
 
   private pickUpObject() {
     this.pickedUpObject = this.pickableInView();
-    // this.pickedUpObject!.physicsBody!.setMotionType(PhysicsMotionType.ANIMATED);
   }
 
   private onGround(): boolean {
