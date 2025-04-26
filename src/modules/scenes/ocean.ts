@@ -31,7 +31,7 @@ export default class Ocean extends Scene {
     transparentMaterial.alpha = 0.5;
 
     const gui = this.gui;
-    const image = new Image("cursor", "../assets/cursor.svg");
+    const image = new Image("cursor", "./assets/cursor.svg");
     image.width = "5px";
     image.height = "5px";
     image.horizontalAlignment = Control.HORIZONTAL_ALIGNMENT_CENTER;
@@ -114,7 +114,6 @@ export default class Ocean extends Scene {
     game.getRadioMusic().resume();
     game.getRadioMusic().spatial.attach(null);
     game.getRadioMusic().spatial.attach(this.getMeshById("radio"));
-    console.log(this.getMeshById("radio")?.position);
     game.getAudioEngine().listener.attach(this.activeCamera);
   }
 }
