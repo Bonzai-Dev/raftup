@@ -6,6 +6,7 @@ import glsl from "vite-plugin-glsl";
 export default defineConfig({
   base: "./",
   plugins: [tsconfigPaths(), glsl()],
+  assetsInclude: ["**/*.glb"],
   optimizeDeps: {
     exclude: ["@babylonjs/havok"],
   },

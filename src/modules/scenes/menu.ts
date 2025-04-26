@@ -57,7 +57,7 @@ export default class Test extends Scene {
 
     new OceanMesh();
 
-    new Mesh("../assets/models/raft.glb", "raft", {
+    new Mesh("./assets/models/raft.glb", "raft", {
       collider: PhysicsShapeType.BOX,
       position: new Vector3(0, -10, 0),
       physicsMaterial: { mass: 5000, restitution: 0, friction: 1 },
@@ -66,7 +66,7 @@ export default class Test extends Scene {
 
     new Radio(new Vector3(-2, -10, -0.5), new Vector3(0, toRad(15), 0));
 
-    new Mesh("../assets/models/plasticChair.glb", "plasticChair", {
+    new Mesh("./assets/models/plasticChair.glb", "plasticChair", {
       collider: PhysicsShapeType.BOX,
       position: new Vector3(-2, -5, -3),
       rotation: new Vector3(0, toRad(-45), 0),
