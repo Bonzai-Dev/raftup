@@ -22,7 +22,7 @@ export default class Ocean extends Scene {
   protected daysSurvived = 0;
 
   constructor(parameters: SceneParameters) {
-    super({ engine: parameters.engine, canvas: parameters.canvas });
+    super({ engine: parameters.engine, canvas: parameters.canvas, debugMode: true });
   }
 
   protected override async scene() {

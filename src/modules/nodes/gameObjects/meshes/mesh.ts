@@ -22,7 +22,7 @@ export default class Mesh {
     this.loadingPromise = this.loadMesh(src, name, parameters);
   }
 
-  private async loadMesh(src: string, name: string, parameters: GameObjectParameters) {
+  protected async loadMesh(src: string, name: string, parameters: GameObjectParameters) {
     const scene = Game.getInstance().getScene();
     const model = await importGlb(src);
 
