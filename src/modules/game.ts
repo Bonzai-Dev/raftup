@@ -55,7 +55,7 @@ export default class Game {
       listenerEnabled: true,
     });
 
-    this.radioMusic = await CreateSoundAsync("music", "/assets/sounds/funkyRadioMix.wav", {
+    this.radioMusic = await CreateSoundAsync("music", "/src/assets/sounds/funkyRadioMix.wav", {
       spatialEnabled: true,
       spatialAutoUpdate: true,
       loop: true,
@@ -63,7 +63,7 @@ export default class Game {
       spatialMaxDistance: 20,
     });
 
-    this.menuMusic = await CreateSoundAsync("music", "/assets/sounds/funky.wav");
+    this.menuMusic = await CreateSoundAsync("music", "/src/assets/sounds/funky.wav");
 
     await this.audioEngine!.unlockAsync();
 
