@@ -11,3 +11,13 @@ A small indie game made by a couple of dudes for the game jam [gamedev.js](https
 [@Maxence](https://www.youtube.com/@MaxenceThePotato) for the epic models
 <br>
 [@foufouv](https://www.youtube.com/@foufouv/videos) for the textures and logo
+
+## Development
+```
+npm run dev
+```
+
+## Building
+```
+npm run build
+```
