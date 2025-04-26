@@ -4,6 +4,7 @@ import glsl from "vite-plugin-glsl";
 
 // https://vite.dev/config/
 export default defineConfig({
+  base: "./",
   plugins: [tsconfigPaths(), glsl()],
   optimizeDeps: {
     exclude: ["@babylonjs/havok"],
