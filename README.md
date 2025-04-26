@@ -1,7 +1,7 @@
-<h1 align="center">Raftup</h1>
+<img src="./public/logo.png">
 
 ## Project Description
-A small indie game made by a couple of dudes for the game jam gamedev.js in 2 weeks
+A small indie game made by a couple of dudes for the game jam [gamedev.js](https://itch.io/jam/gamedevjs-2025) in 2 weeks
 
 ## Credits
 [@Research](https://www.youtube.com/channel/UCGa2xJPuMlI0ACQQkZCHWmA) for the dope music
@@ -10,4 +10,4 @@ A small indie game made by a couple of dudes for the game jam gamedev.js in 2 we
 <br>
 [@Maxence](https://www.youtube.com/@MaxenceThePotato) for the epic models
 <br>
-[@foufouv](https://www.youtube.com/@foufouv/videos) for the textures
+[@foufouv](https://www.youtube.com/@foufouv/videos) for the textures and logo
