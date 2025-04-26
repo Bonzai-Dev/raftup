@@ -1,5 +1,7 @@
 <img src="./public/logo.png">
 
+Play the game here: https://bonzai-dev.itch.io/raftup
+
 ## Project Description
 A small indie game made by a couple of dudes for the game jam [gamedev.js](https://itch.io/jam/gamedevjs-2025) in 2 weeks
 
