@@ -12,6 +12,6 @@ export default class Radio extends Mesh {
       physicsMaterial: { mass: 50, restitution: 0, friction: 50 },
       tags: [tags.pickable, tags.floating],
     }
-    super("/assets/models/radio.glb", "radio", parameters);
+    super("/src/assets/models/radio.glb", "radio", parameters);
   }
 }

@@ -1,7 +1,7 @@
 import { Color3, DirectionalLight, MeshBuilder, ShaderMaterial, Vector2, Vector3 } from "@babylonjs/core";
 import Game from "@/modules/game";
-import oceanVertexShader from "@/public/assets/shaders/ocean/ocean.vert";
-import oceanFragmentShader from "@/public/assets/shaders/ocean/ocean.frag";
+import oceanVertexShader from "@/public/src/assets/shaders/ocean/ocean.vert";
+import oceanFragmentShader from "@/public/src/assets/shaders/ocean/ocean.frag";
 import { physics, tags } from "@/config";
 
 export default class Ocean {
