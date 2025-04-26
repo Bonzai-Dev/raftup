@@ -10,4 +10,4 @@ A small indie game made by a couple of dudes for the game jam gamedev.js in 2 we
 <br>
 [@Maxence](https://www.youtube.com/@MaxenceThePotato) for the epic models
 <br>
-@foufouv for the textures
+[@foufouv](https://www.youtube.com/@foufouv/videos) for the textures
