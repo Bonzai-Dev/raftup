@@ -122,7 +122,7 @@ export default class Scene extends BabylonScene {
     });
 
     parameters.canvas.addEventListener("click", () => {
-      if (!this.freeCameraEnabled && Game.getInstance().getCurrentState() !== GameStates.MENU) {
+      if (!this.freeCameraEnabled && Game.getInstance().getCurrentState() === GameStates.PLAYING) {
         parameters.canvas.requestPointerLock();
         parameters.canvas.focus();
       }
@@ -199,5 +199,9 @@ export default class Scene extends BabylonScene {
 
   public getStartTime(): number {
     return this.startTime;
+  }
+
+  public getGui(): AdvancedDynamicTexture {
+    return this.gui;
   }
 }

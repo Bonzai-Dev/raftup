@@ -6,42 +6,35 @@ import {
   Color3,
   UniversalCamera,
   Ray,
+  Mesh,
   AbstractMesh,
   Quaternion,
   ProximityCastResult,
   HavokPlugin,
-  Mesh,
-  PhysicsShape,
-  PhysicsBody,
-  PhysicsMotionType,
-  TransformNode,
-  AnimationGroup,
 } from "@babylonjs/core";
-import { inputsMap, physics, tags } from "@/config";
-import { toDeg, toRad } from "@mathigon/euclid";
+import { inputsMap, tags } from "@/config";
+import { toRad } from "@mathigon/euclid";
 import GameObject, { GameObjectParameters } from "./object";
 import Game from "@/modules/game";
 import Inputs from "@/modules/inputs";
-import { importGlb } from "@/utils/meshImport";
-import MeshClass from "./meshes/mesh";
+import { TextBlock } from "@babylonjs/gui";
 
-export default class Player {
+export default class Player extends GameObject {
   private readonly camera: UniversalCamera;
 
-  private readonly playerHeight: number = 3.4;
+  private readonly playerHeight: number;
   private readonly groundCheckDistance = 0.2;
   private readonly grabRange = 5;
   private readonly pickUpDistance = 2.5;
 
   private readonly speed: number = 5;
-  private readonly jumpForce = 10;
+  private readonly jumpForce = 30000;
   private readonly counterForce = 17000;
   private readonly acceleration = 30000;
-  private animations: AnimationGroup[] | undefined;
 
   private moveVector = Vector3.Zero();
   private pickedUpObject: Mesh | AbstractMesh | undefined;
-  protected mesh: TransformNode | undefined;
+  private pickupText: TextBlock;
 
   constructor(position?: Vector3) {
     const game = Game.getInstance();
@@ -50,63 +43,36 @@ export default class Player {
     const playerMaterial = new StandardMaterial("player", scene);
     playerMaterial.diffuseColor = new Color3(1, 0.584, 0);
 
-    this.camera = scene.getCamera();
-    this.loadPlayer(position);
-  }
-
-  private async loadPlayer(position?: Vector3) {
-    const scene = Game.getInstance().getScene();
-    const model = await importGlb("./assets/models/player.glb");
-
-    const root = model.meshes[0];
-    const { min, max } = root.getHierarchyBoundingVectors();
-    const size = max.subtract(min);
-    const center = min.add(max).scale(0.5).add(new Vector3(0, 2.8, 0));
-    const newRoot = MeshBuilder.CreateBox("player", {
-      width: size.x,
-      height: size.y,
-      depth: size.z,
-    });
-    newRoot.position = position || Vector3.Zero();
-    root.rotation = new Vector3(0, 0, 0);
-    root.parent = newRoot;
-    newRoot.visibility = 0;
-
-    newRoot.position = position || Vector3.Zero();
-
-    this.animations = model.animationGroups;
-
-    const shape = new PhysicsShape(
-      {
-        type: PhysicsShapeType.CAPSULE,
-        parameters: {
-          center: center,
-          extents: size,
-          radius: size.x / 2,
-          pointA: center.add(new Vector3(0, size.y / 2, 0)),
-          pointB: center.subtract(new Vector3(0, size.y / 2, 0)),
-        },
-      },
-      scene
-    );
-
-    shape.material = {
-      friction: 5,
-      restitution: 0,
+    const parameters: GameObjectParameters = {
+      mesh: MeshBuilder.CreateCapsule("player", { height: 3.4, radius: 0.5 }, scene),
+      collider: PhysicsShapeType.CAPSULE,
+      physicsMaterial: { mass: 1, restitution: 0, friction: 0.1 },
+      material: playerMaterial,
+      position: position || Vector3.Zero(),
     };
+    super(parameters);
+    this.pickupText = new TextBlock("pickupText", "Press E to pick up");
+    this.pickupText.color = "white";
+    this.pickupText.fontSize = 20;
+    this.pickupText.fontFamily = "Cal Sans";
+    this.pickupText.horizontalAlignment = TextBlock.HORIZONTAL_ALIGNMENT_CENTER;
+    this.pickupText.verticalAlignment = TextBlock.VERTICAL_ALIGNMENT_CENTER;
+    this.pickupText.isVisible = false;
+    this.pickupText.top = "200px";
+    scene.getGui().addControl(this.pickupText);
 
-    const body = new PhysicsBody(newRoot, PhysicsMotionType.DYNAMIC, false, scene);
-    body.setMassProperties({ mass: 1, inertia: Vector3.Zero() });
-    body.shape = shape;
-
-    this.mesh = newRoot;
+    this.camera = scene.getCamera();
 
     const glasses = MeshBuilder.CreateBox("Glasses", { height: 0.25, width: 0.8, depth: 0.6 }, scene);
-    glasses.parent = this.mesh!;
-    glasses.position.y = 3;
-    glasses.position.z = -1.3;
-    glasses.visibility = 0;
-    this.mesh!.physicsBody!.shape!.filterMembershipMask = 2;
+    glasses.parent = this.mesh;
+    glasses.position.y = 1;
+    glasses.position.z = -0.25;
+    this.collider.body.setMassProperties({ inertia: Vector3.Zero() });
+
+    this.collider.body.shape!.filterMembershipMask = 2;
+
+    const boundingInfo = this.mesh.getBoundingInfo();
+    this.playerHeight = boundingInfo.boundingBox.maximumWorld.y - boundingInfo.boundingBox.minimumWorld.y;
 
     scene.onBeforeRenderObservable.add(() => {
       if (scene.getFreeCameraEnabled()) return;
@@ -114,21 +80,23 @@ export default class Player {
       this.movePlayer();
 
       const cameraLookDirection = this.camera.getDirection(Vector3.Forward());
+      this.camera.position = new Vector3(
+        this.mesh.position.x,
+        this.mesh.position.y + glasses.position.y,
+        this.mesh.position.z
+      );
 
-      const glassesWorldPosition = glasses.getAbsolutePosition();
-      this.camera.position = glassesWorldPosition;
+      if (this.camera.rotation.x >= toRad(90 - 30)) this.dropObject();
 
-      if (this.camera.rotation.x >= toRad(90 - 10)) this.dropObject();
-
-      this.mesh!.rotation = new Vector3(0, Math.atan2(-cameraLookDirection.x, -cameraLookDirection.z), 0);
-      this.mesh!.physicsBody!.setAngularVelocity(Vector3.Zero());
+      this.mesh.rotation = new Vector3(0, Math.atan2(-cameraLookDirection.x, -cameraLookDirection.z), 0);
+      this.collider.body.setAngularVelocity(Vector3.Zero());
     });
   }
 
   private handleInputs() {
     const inputs = Inputs.getInstance();
     const cameraRightDirection = this.camera.getDirection(Vector3.Right());
-    const playerLookDirection = this.mesh!.getDirection(Vector3.Forward());
+    const playerLookDirection = this.mesh.getDirection(Vector3.Forward());
 
     let currentMoveDirection = new Vector3();
     if (inputs.keyDown(inputsMap.moveForward)) currentMoveDirection.z += 1;
@@ -143,20 +111,20 @@ export default class Player {
     this.moveVector = currentMoveDirection;
 
     if (inputs.keyTapped(inputsMap.jump) && this.onGround()) {
-      const currentVelocity = this.mesh!.physicsBody!.getLinearVelocity();
-      this.mesh!.physicsBody!.setLinearVelocity(
-        new Vector3(currentVelocity.x, 0, currentVelocity.z) 
-      );
-      this.mesh!.physicsBody!.applyImpulse(
-        new Vector3(0, this.jumpForce, 0),
-        this.mesh!.position
+      this.collider.body.setLinearDamping(0);
+      this.collider.body.applyImpulse(
+        new Vector3(this.moveVector.x * this.acceleration, this.jumpForce, this.moveVector.z * this.acceleration),
+        this.mesh.position
       );
     }
+
+    if (this.pickableInView() || this.pickedUpObject) this.pickupText.isVisible = true;
+    else this.pickupText.isVisible = false;
 
     if (inputs.keyTapped(inputsMap.pickUp) && this.pickableInView()) {
       this.pickUpObject();
     } else if (this.pickedUpObject) {
-      this.pickedUpObject!.physicsBody!.setTargetTransform(
+      this.pickedUpObject!.physicsBody?.setTargetTransform(
         Vector3.Lerp(
           this.pickedUpObject!.position,
           this.camera.position.add(this.camera.getDirection(Vector3.Forward()).scale(this.pickUpDistance)),
@@ -170,21 +138,30 @@ export default class Player {
   }
 
   private movePlayer() {
-    if (!this.onGround())
-      this.animations![2].play(true);
-
-    if (this.moveVector.length() === 0 && this.onGround()) {
-      this.animations![2].stop();
-      this.animations![3].stop();
-    } else if (this.moveVector.length() > 0) {
-      this.animations![3].play();
-      this.mesh!.physicsBody!.setLinearVelocity(
-        new Vector3(
-          this.moveVector.x * this.speed,
-          this.mesh!.physicsBody!.getLinearVelocity().y,
-          this.moveVector.z * this.speed
-        )
+    // Counter force
+    if (!this.onGround()) {
+      this.collider.body.applyForce(
+        new Vector3(-this.moveVector.x * this.counterForce, 0, -this.moveVector.z * this.counterForce),
+        this.mesh.position
       );
+    }
+
+    // Movement
+    if (this.moveVector.length() === 0 && this.onGround()) {
+    } else if (this.moveVector.length() > 0) {
+      // Apply movement force
+      this.collider.body.applyForce(
+        new Vector3(this.moveVector.x * this.acceleration, 0, this.moveVector.z * this.acceleration),
+        this.mesh.position
+      );
+    }
+
+    // Limit speed
+    const linearVelocity = this.collider.body.getLinearVelocity();
+    if (new Vector3(linearVelocity.x, 0, linearVelocity.z).length() > this.speed) {
+      const fallSpeed = linearVelocity.y;
+      const limitedVelocity = linearVelocity.normalize().scale(this.speed);
+      this.collider.body.setLinearVelocity(new Vector3(limitedVelocity.x, fallSpeed, limitedVelocity.z));
     }
   }
 
@@ -202,18 +179,20 @@ export default class Player {
   }
 
   private dropObject() {
+    this.pickupText.text = "Press E to pick up";
     if (!this.pickedUpObject) return;
     this.pickedUpObject!.physicsBody!.setLinearVelocity(Vector3.Zero());
     this.pickedUpObject = undefined;
   }
 
   private pickUpObject() {
+    this.pickupText.text = "Press Q to drop";
     this.pickedUpObject = this.pickableInView();
   }
 
   private onGround(): boolean {
     const havokPlugin = Game.getInstance().getScene().getPhysicsEngine()?.getPhysicsPlugin() as HavokPlugin;
-    const position = this.mesh!.position.subtract(new Vector3(0, this.playerHeight + this.groundCheckDistance, 0));
+    const position = this.mesh.position.subtract(new Vector3(0, this.playerHeight + this.groundCheckDistance, 0));
     const result = new ProximityCastResult();
     havokPlugin.pointProximity(
       {
@@ -226,6 +205,6 @@ export default class Player {
       },
       result
     );
-    return result.hasHit && this.mesh!.physicsBody!.getLinearVelocity().y <= 1;
+    return result.hasHit && this.collider.body.getLinearVelocity().y <= 0;
   }
 }

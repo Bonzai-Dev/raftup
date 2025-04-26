@@ -8,7 +8,7 @@ import {
 } from "@babylonjs/core";
 import "@babylonjs/inspector";
 import { toRad } from "@mathigon/euclid";
-import { Button } from "@babylonjs/gui";
+import { Button, TextBlock } from "@babylonjs/gui";
 import { tags } from "@/config";
 import Scene, { SceneParameters } from "./scene";
 import Game, { GameStates } from "@/modules/game";
@@ -43,12 +43,22 @@ export default class Test extends Scene {
     playButton.color = "white";
     playButton.thickness = 0;
     playButton.hoverCursor = "pointer";
+    playButton.fontFamily = "Cal Sans";
     this.gui.addControl(playButton);
+
+    const gameTitle = new TextBlock("gameTitle", "RAFTUP");
+    gameTitle.color = "white";
+    gameTitle.fontSize = 50;
+    gameTitle.width = "200px";
+    gameTitle.height = "50px";
+    gameTitle.top = "-50px";
+    gameTitle.fontFamily = "Cal Sans";
+    this.gui.addControl(gameTitle);
 
     playButton.onPointerUpObservable.add(() => {
       const game = Game.getInstance();
 
-      game.getMenuMusic().stop();
+      game.getMenuMusic().pause();
       game.getRadioMusic().pause();
 
       game.setCurrentState(GameStates.PLAYING);

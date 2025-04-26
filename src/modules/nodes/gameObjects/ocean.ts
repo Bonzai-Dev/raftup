@@ -5,9 +5,9 @@ import oceanFragmentShader from "@/public/assets/shaders/ocean/ocean.frag";
 import { physics, tags } from "@/config";
 
 export default class Ocean {
-  private wave1Values = new Vector2(1, 0.1); // 0.6, 0.8
-  private wave2Values = new Vector2(0.8, 0.1); // 0.2, 1
-  private wave3Values = new Vector2(0.5, 0.1); // 0.3, 0.5
+  private wave1Values = new Vector2(1, 0.1);
+  private wave2Values = new Vector2(0.8, 0.1); 
+  private wave3Values = new Vector2(0.5, 0.1); 
   private windSpeed = 5;
 
   private readonly baseColor = new Color3(0, 0.506, 0.62);
@@ -64,14 +64,14 @@ export default class Ocean {
 
     oceanShader.setVector3("lightPosition", directionalLight!.position!);
 
-    oceanShader.setVector2("wave1Values", this.wave1Values);
-    oceanShader.setVector2("wave2Values", this.wave2Values);
-    oceanShader.setVector2("wave3Values", this.wave3Values);
-
     oceanShader.setColor3("baseColor", this.baseColor);
     oceanShader.setColor3("ambientColor", this.ambientColor);
 
     scene.onBeforeRenderObservable.add(() => {
+      oceanShader.setVector2("wave1Values", this.wave1Values);
+      oceanShader.setVector2("wave2Values", this.wave2Values);
+      oceanShader.setVector2("wave3Values", this.wave3Values);
+
       oceanShader.setFloat("time", scene.getStartTime());
       oceanShader.setVector3("lightDirection", directionalLight!.direction!.normalize());
       oceanShader.setVector3("cameraLookDirection", camera.getDirection(Vector3.Forward()));
@@ -133,5 +133,17 @@ export default class Ocean {
     const b = wavePosition.z * frequency + totalTime;
     const wave = Math.pow(2, h * (Math.sin(a) + Math.cos(b))) * 0.5;
     return wave * Math.log(2.0) * (-h * frequency * Math.sin(b));
+  }
+
+  public setWave1Values(values: Vector2) {
+    this.wave1Values = values;
+  }
+
+  public setWave2Values(values: Vector2) {
+    this.wave2Values = values;
+  }
+
+  public setWave3Values(values: Vector2) {
+    this.wave3Values = values;
   }
 }
