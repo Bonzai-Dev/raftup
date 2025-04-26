@@ -43,7 +43,7 @@ export default class Test extends Scene {
     playButton.color = "white";
     playButton.thickness = 0;
     playButton.hoverCursor = "pointer";
-    playButton.fontFamily = "Cal Sans";
+    playButton.fontFamily = "cal-sans";
     this.gui.addControl(playButton);
 
     const gameTitle = new TextBlock("gameTitle", "RAFTUP");
@@ -52,7 +52,7 @@ export default class Test extends Scene {
     gameTitle.width = "200px";
     gameTitle.height = "50px";
     gameTitle.top = "-50px";
-    gameTitle.fontFamily = "Cal Sans";
+    gameTitle.fontWeight = "bold";
     this.gui.addControl(gameTitle);
 
     playButton.onPointerUpObservable.add(() => {
