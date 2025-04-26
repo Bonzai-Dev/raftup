@@ -12,18 +12,19 @@ import {
   GizmoManager,
   MeshBuilder,
   Mesh,
-  AudioEngineV2,
-  ReflectionProbe,
   DirectionalLight,
   HemisphericLight,
 } from "@babylonjs/core";
+import { animate } from "animejs";
 import { SkyMaterial } from "@babylonjs/materials";
 import { registerBuiltInLoaders } from "@babylonjs/loaders/dynamic";
 import HavokPhysics from "@babylonjs/havok";
 import "@babylonjs/inspector";
 import { physics, inputsMap, dayNightCycle } from "@/config";
 import Inputs from "@/modules/inputs";
-import { toRad } from "@mathigon/euclid";
+import { toDeg, toRad } from "@mathigon/euclid";
+import { AdvancedDynamicTexture } from "@babylonjs/gui";
+import Game, { GameStates } from "../game";
 
 export interface SceneParameters {
   engine: Engine;
@@ -36,26 +37,30 @@ export default class Scene extends BabylonScene {
   protected readonly debugMode: boolean;
   protected readonly skybox: Mesh;
   protected readonly skyMaterial: SkyMaterial;
-  protected audioEngine: AudioEngineV2 | undefined;
+  protected readonly gui: AdvancedDynamicTexture;
   private freeCameraEnabled = false;
   protected startTime = 0;
-  private daysSurvived = 0; 
+  protected currentDayTime = 10;
 
   constructor(parameters: SceneParameters) {
     super(parameters.engine);
     registerBuiltInLoaders();
 
+    this.gui = AdvancedDynamicTexture.CreateFullscreenUI("UI");
+
     this.skyMaterial = new SkyMaterial("skyMaterial", this);
     this.skyMaterial.backFaceCulling = false;
-    this.skyMaterial.luminance = 1.1;
+    this.skyMaterial.luminance = 0.1;
     this.skyMaterial.turbidity = 5;
-
-    this.skyMaterial.backFaceCulling = false;
+    this.skyMaterial.rayleigh = 0.5;
+    this.skyMaterial.mieDirectionalG = 0.8;
+    this.skyMaterial.mieCoefficient = 0.005;
 
     this.skybox = MeshBuilder.CreateBox("skyBox", { size: 5000 }, this);
     this.skybox.material = this.skyMaterial;
 
     const inputs = Inputs.getInstance();
+
     this.debugMode = parameters.debugMode || false;
 
     this.camera = new UniversalCamera("Camera", Vector3.Zero(), this);
@@ -71,22 +76,22 @@ export default class Scene extends BabylonScene {
 
     this.onBeforeRenderObservable.add(() => {
       this.startTime += this.getEngine().getDeltaTime() / 1000;
+      const game = Game.getInstance();
 
-      const sunDirection = this.skyMaterial.sunPosition;
+      const sunRotation = toRad((this.currentDayTime * 360) / dayNightCycle.dayDuration);
+      this.skyMaterial.useSunPosition = true;
+      this.skyMaterial.sunPosition = new Vector3(Math.cos(sunRotation), Math.sin(sunRotation));
 
-      const normalizedTime = (this.startTime % dayNightCycle.dayDuration) / dayNightCycle.dayDuration;
-      this.skyMaterial.inclination = Math.sin(normalizedTime * 2 * Math.PI) * 0.55;
-      this.skyMaterial.azimuth = Math.cos(normalizedTime * 2 * Math.PI) * 0.55;
-
-      // time varaible seperate and reset it each time and yes
-
-      for (let lightIndex = 0; lightIndex < this.lights.length; lightIndex++) {
-        const light = this.lights[lightIndex];
-        if (light instanceof DirectionalLight) {
-          light.direction = sunDirection.normalize().negate();
-          light.intensity = Math.abs(Math.cos(normalizedTime * 2 * Math.PI) * 0.3);
-        } else if (light instanceof HemisphericLight) {
-          light.intensity = Math.abs(Math.cos(normalizedTime * 2 * Math.PI) * 0.5);
+      if (game.getCurrentState() !== GameStates.MENU) {
+        const sunDirection = this.skyMaterial.sunPosition;
+        for (let lightIndex = 0; lightIndex < this.lights.length; lightIndex++) {
+          const light = this.lights[lightIndex];
+          if (light instanceof DirectionalLight) {
+            light.direction = sunDirection.normalize().negate();
+            light.intensity = Math.abs(Math.cos((toDeg(sunRotation) / 360) * 2) * 0.3);
+          } else if (light instanceof HemisphericLight) {
+            light.intensity = Math.abs(Math.cos((toDeg(sunRotation) / 360) * 2) * 0.5);
+          }
         }
       }
     });
@@ -117,7 +122,7 @@ export default class Scene extends BabylonScene {
     });
 
     parameters.canvas.addEventListener("click", () => {
-      if (!this.freeCameraEnabled) {
+      if (!this.freeCameraEnabled && Game.getInstance().getCurrentState() !== GameStates.MENU) {
         parameters.canvas.requestPointerLock();
         parameters.canvas.focus();
       }
@@ -129,8 +134,14 @@ export default class Scene extends BabylonScene {
   private async loadScene() {
     await this.loadPhysics();
     await this.scene();
-    await this.loadAudio();
+    animate(Game.getInstance().getFadeTransition(), {
+      opacity: [1, 0],
+      duration: 800, 
+      easing: "easeInOutQuad",
+    });
+
     await this.whenReadyAsync();
+    this.loadAudio();
 
     if (this.debugMode) {
       const gizmosManager = new GizmoManager(this);
@@ -176,7 +187,7 @@ export default class Scene extends BabylonScene {
 
   protected async scene() {}
 
-  protected async loadAudio() {}
+  protected loadAudio() {}
 
   public getCamera(): UniversalCamera {
     return this.camera;
@@ -184,10 +195,6 @@ export default class Scene extends BabylonScene {
 
   public getFreeCameraEnabled(): boolean {
     return this.freeCameraEnabled;
-  }
-
-  public getAudioEngine(): AudioEngineV2 {
-    return this.audioEngine as AudioEngineV2;
   }
 
   public getStartTime(): number {

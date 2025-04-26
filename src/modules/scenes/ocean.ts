@@ -5,23 +5,24 @@ import {
   DirectionalLight,
   StandardMaterial,
   Color3,
-  CreateSoundAsync,
-  CreateAudioEngineAsync,
 } from "@babylonjs/core";
 import "@babylonjs/inspector";
-import { Control, Image } from "@babylonjs/gui";
-import { tags } from "@/config";
+import { Control, Image, TextBlock } from "@babylonjs/gui";
+import { dayNightCycle, tags } from "@/config";
 import Scene, { SceneParameters } from "./scene";
-import Game from "@/modules/game";
-import Ocean from "@/modules/nodes/gameObjects/ocean";
+import OceanMesh from "@/modules/nodes/gameObjects/ocean";
 import Mesh from "@/modules/nodes/gameObjects/meshes/mesh";
 import Player from "@/modules/nodes/gameObjects/player";
-import Radio from "../nodes/gameObjects/meshes/radio";
+import Radio from "@/modules/nodes/gameObjects/meshes/radio";
 import { toRad } from "@mathigon/euclid";
+import Game from "../game";
 
-export default class Test extends Scene {
+export default class Ocean extends Scene {
+  protected startTime = 0;
+  protected daysSurvived = 0;
+
   constructor(parameters: SceneParameters) {
-    super({ engine: parameters.engine, canvas: parameters.canvas, debugMode: true });
+    super({ engine: parameters.engine, canvas: parameters.canvas });
   }
 
   protected override async scene() {
@@ -29,7 +30,7 @@ export default class Test extends Scene {
     transparentMaterial.diffuseColor = new Color3(1, 0, 0);
     transparentMaterial.alpha = 0.5;
 
-    const gui = Game.getInstance().getGui();
+    const gui = this.gui;
     const image = new Image("cursor", "/assets/cursor.svg");
     image.width = "5px";
     image.height = "5px";
@@ -38,13 +39,32 @@ export default class Test extends Scene {
     image.isPointerBlocker = false;
     gui.addControl(image);
 
+    const dayCount = new TextBlock("dayCount");
+    dayCount.color = "white";
+    dayCount.textHorizontalAlignment = Control.HORIZONTAL_ALIGNMENT_LEFT; 
+    dayCount.textVerticalAlignment = Control.VERTICAL_ALIGNMENT_TOP;
+    dayCount.top = "50px";
+    dayCount.left = "50px"; 
+    gui.addControl(dayCount);
+
     const hemisphericLight = new HemisphericLight("HemisphericLight", new Vector3(1, 1, 0), this);
     hemisphericLight.intensity = 0.6;
     const directionalLight = new DirectionalLight("DirectionalLight", new Vector3(0.447, -0.895, 0), this);
     directionalLight.position = new Vector3(0, 10, 0);
     directionalLight.intensity = 0.3;
+    
+    this.onBeforeRenderObservable.add(() => {
+      if (this.currentDayTime <= dayNightCycle.dayDuration) {
+        this.currentDayTime += this.getEngine().getDeltaTime() / 1000;
+      } else {
+        this.currentDayTime = 0;
+        this.daysSurvived += 1;
+      }
 
-    new Ocean();
+      dayCount.text = `Days Survived: ${this.daysSurvived}`;
+    });
+
+    new OceanMesh();
 
     new Mesh("/assets/models/raft.glb", "raft", {
       collider: PhysicsShapeType.BOX,
@@ -88,26 +108,13 @@ export default class Test extends Scene {
     new Player(new Vector3(0, 2, 0));
   }
 
-  protected override async loadAudio() {
-    this.audioEngine = await CreateAudioEngineAsync({
-      volume: 0.5,
-      listenerAutoUpdate: true,
-      listenerEnabled: true,
-    });
-
-    const music = await CreateSoundAsync("music", "/assets/sounds/funkyRadioMix.wav", {
-      spatialEnabled: true,
-      spatialAutoUpdate: true,
-      loop: true,
-      spatialDistanceModel: "linear",
-      spatialMaxDistance: 20,
-    });
-
-    music.spatial.attach(this.getMeshById("radio"));
-    await this.audioEngine.unlockAsync();
-
-    this.audioEngine.listener.attach(this.activeCamera);
-
-    music.play({ loop: true });
+  protected override loadAudio() {
+    const game = Game.getInstance();
+    game.getRadioMusic().volume = 1;
+    game.getRadioMusic().resume();
+    game.getRadioMusic().spatial.attach(null);
+    game.getRadioMusic().spatial.attach(this.getMeshById("radio"));
+    console.log(this.getMeshById("radio")?.position);
+    game.getAudioEngine().listener.attach(this.activeCamera);
   }
 }

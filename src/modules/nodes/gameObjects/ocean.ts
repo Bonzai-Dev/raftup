@@ -5,15 +5,14 @@ import oceanFragmentShader from "@/public/assets/shaders/ocean/ocean.frag";
 import { physics, tags } from "@/config";
 
 export default class Ocean {
-  // Wave values, X for frequency, Y for height
-  private readonly wave1Values = new Vector2(0.1, 0.5); // 0.6, 0.8
-  private readonly wave2Values = new Vector2(0.1, 0.5); // 0.2, 1
-  private readonly wave3Values = new Vector2(0.1, 0.5); // 0.3, 0.5
+  private wave1Values = new Vector2(1, 0.1); // 0.6, 0.8
+  private wave2Values = new Vector2(0.8, 0.1); // 0.2, 1
+  private wave3Values = new Vector2(0.5, 0.1); // 0.3, 0.5
+  private windSpeed = 5;
 
   private readonly baseColor = new Color3(0, 0.506, 0.62);
   private readonly ambientColor = new Color3(0.212, 0.314, 0.322);
 
-  private readonly windSpeed = 5;
   private readonly specularStrength = 0.14;
   private readonly shininess = 15;
   private readonly oceanPositionY = -10;

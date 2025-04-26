@@ -1,14 +1,15 @@
 import { Vector3 } from "@babylonjs/core";
-import DayNightCycleSettings from "@/types/DayNightCycle";
+import { minutesToSeconds } from "@/utils/time";
 import PhysicsSettings from "@/types/PhysicsSettings";
+import DayNightCycleSettings from "@/types/DayNightCycle";
 
 export const physics: PhysicsSettings = {
   gravity: new Vector3(0, -19.62, 0),
 };
 
 export const dayNightCycle: DayNightCycleSettings = {
-  dayDuration: 1200,
-};
+  dayDuration: minutesToSeconds(2),
+}
 
 export const tags = {
   pickable: "pickable",
