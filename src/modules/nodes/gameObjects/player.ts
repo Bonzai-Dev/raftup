@@ -9,8 +9,6 @@ import {
   Mesh,
   AbstractMesh,
   Quaternion,
-  ProximityCastResult,
-  HavokPlugin,
 } from "@babylonjs/core";
 import { inputsMap, tags } from "@/config";
 import { toRad } from "@mathigon/euclid";
@@ -191,20 +189,11 @@ export default class Player extends GameObject {
   }
 
   private onGround(): boolean {
-    const havokPlugin = Game.getInstance().getScene().getPhysicsEngine()?.getPhysicsPlugin() as HavokPlugin;
-    const position = this.mesh.position.subtract(new Vector3(0, this.playerHeight + this.groundCheckDistance, 0));
-    const result = new ProximityCastResult();
-    havokPlugin.pointProximity(
-      {
-        position: position,
-        maxDistance: 1.5,
-        collisionFilter: {
-          collideWith: 1,
-        },
-        shouldHitTriggers: true,
-      },
-      result
+    const physicsEngine = Game.getInstance().getScene().getPhysicsEngine()!;
+    const rayEnd = this.mesh.position.subtract(new Vector3(0, this.playerHeight + this.groundCheckDistance, 0));
+    return (
+      physicsEngine.raycast(this.mesh.position, rayEnd, { collideWith: 1 }).hasHit &&
+      new Vector3(0, this.collider.body.getLinearVelocity().y, 0).length() < 5
     );
-    return result.hasHit && this.collider.body.getLinearVelocity().y <= 0;
   }
 }
